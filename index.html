@@ -12,19 +12,17 @@
         #topBar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         #calendar { background: white; padding: 5px; border-radius: 15px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
-        /* Colori Turni */
         .fc-event { border: none !important; padding: 5px !important; border-radius: 6px !important; font-weight: bold; text-align: center; font-size: 0.85em; }
         .bg-riposo { background-color: var(--riposo) !important; }
         .bg-disp { background-color: var(--disp) !important; }
         .bg-turno { background-color: var(--turno) !important; }
         .bg-modificato { background-color: #f5365c !important; }
 
-        /* Pop-up Modali */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
         .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 380px; border-radius: 20px; text-align: center; }
         
         .info-box { background: #f0f3ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; text-align: left; border-left: 5px solid var(--turno); }
-        select { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; }
+        select { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; background: white; }
         .btn { padding: 15px 25px; border: none; border-radius: 12px; color: white; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px; }
         .btn-grey { background: #adb5bd; }
         .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 11px; margin: 0; }
@@ -38,26 +36,26 @@
 <div id="topBar">
     <div>
         <h2 style="margin:0; font-size: 16px;">I Miei Turni</h2>
-        <span id="activeRotLabel" style="font-size: 12px; color: var(--turno); font-weight: bold;">Caricamento...</span>
+        <span id="activeRotLabel" style="font-size: 12px; color: var(--turno); font-weight: bold;">Inizializzazione...</span>
     </div>
     <button class="btn btn-reset" onclick="resetTotale()">RESET APP</button>
 </div>
 
 <div id="stepWelcome" class="modal" style="display:block;">
     <div class="modal-content">
-        <h3 style="color: var(--turno)">Ciao!</h3>
+        <h3 style="color: var(--turno)">Benvenuto</h3>
         <div class="info-box">
-            Questa app ti aiuterà a vedere i tuoi turni e riposi in automatico.<br><br>
-            Segui i 3 passi guidati per configurare il tuo calendario.
+            Configuriamo il tuo calendario in pochi secondi.<br><br>
+            Tieni sottomano la tua <b>rotazione</b> e la data del tuo ultimo <b>riposo singolo</b>.
         </div>
-        <button class="btn" style="background: var(--turno)" onclick="prossimoStep('stepWelcome', 'stepRotation')">Inizia Configurazione</button>
+        <button class="btn" style="background: var(--turno)" onclick="prossimoStep('stepWelcome', 'stepRotation')">Inizia</button>
     </div>
 </div>
 
 <div id="stepRotation" class="modal">
     <div class="modal-content">
-        <h3>1. Scegli Rotazione</h3>
-        <p>In quale gruppo di rotazione sei?</p>
+        <h3>Scegli Rotazione</h3>
+        <p>In quale gruppo lavori?</p>
         <select id="rotSelect">
             <option value="rot_fnove">Rotazione F.Nove</option>
             <option value="spez_fnove">Spezzati F.Nove</option>
@@ -68,53 +66,50 @@
             <option value="rot_lido">Rotazione Lido</option>
             <option value="spez_lido">Spezzati Lido</option>
         </select>
-        <button class="btn" style="background: var(--turno)" onclick="confermaRotazione()">Avanti</button>
+        <button class="btn" style="background: var(--turno)" onclick="confermaRotazione()">Conferma e Vai al Calendario</button>
     </div>
 </div>
 
 <div id="stepRiposoInfo" class="modal">
     <div class="modal-content">
-        <h3>2. Riposo Singolo</h3>
+        <h3>Trova il Riposo</h3>
         <div class="info-box">
-            Adesso clicca sul calendario il giorno del tuo <b>Riposo Singolo</b> di questo mese.
+            Adesso tocca sul calendario il giorno del tuo <b>Riposo Singolo</b>.
         </div>
-        <button class="btn" style="background: var(--riposo)" onclick="chiudiModali()">Ho capito, clicco il giorno</button>
+        <button class="btn" style="background: var(--riposo)" onclick="chiudiModali()">Ho capito</button>
     </div>
 </div>
 
 <div id="stepConfirmRiposo" class="modal">
     <div class="modal-content">
         <h3 id="dateToConfirm">Data</h3>
-        <p>Confermi che questo è un giorno di <b>Riposo Singolo</b>?</p>
+        <p>Confermi che questo è il tuo <b>Riposo Singolo</b>?</p>
         <button class="btn" style="background: var(--riposo)" onclick="confermaGiornoRiposo()">Sì, Confermo</button>
-        <button class="btn btn-grey" onclick="chiudiModali()">No, ho sbagliato</button>
+        <button class="btn btn-grey" onclick="chiudiModali()">No, cambia data</button>
     </div>
 </div>
 
 <div id="stepTurnoDopo" class="modal">
     <div class="modal-content">
-        <h3>3. Turno Giorno Dopo</h3>
-        <p>Che turno hai il giorno successivo al riposo?</p>
+        <h3 id="nextDayTitle">Turno Giorno Dopo</h3>
+        <p style="font-size: 14px; color: #666;">Seleziona il turno che hai il giorno successivo al riposo selezionato:</p>
         <select id="turnoDopoSelect"></select>
-        <button class="btn" style="background: var(--turno)" onclick="avviaCalendarioFinale()">Salva e Fine</button>
+        <button class="btn" style="background: var(--turno)" onclick="avviaCalendarioFinale()">Salva e Mostra Calendario</button>
     </div>
 </div>
 
 <div id="modalGiorno" class="modal">
     <div class="modal-content">
         <h3 id="viewDate">Data</h3>
-        
         <div class="turno-info">
             <span class="label-small">Turno Originale</span>
             <div id="origTurnoText" style="font-size: 20px; font-weight: bold; margin: 5px 0;">-</div>
         </div>
-
         <div id="cambioBox" class="turno-info" style="border-color: #f5365c; display:none;">
             <span class="label-small" style="color:#f5365c">Turno Attuale (Cambiato)</span>
             <div id="currTurnoText" style="font-size: 20px; font-weight: bold; color:#f5365c;">-</div>
         </div>
-
-        <span class="section-label">Modifica Turno</span>
+        <span class="label-small">Inserisci Cambio</span>
         <select id="editTurnoSelect"></select>
         <button class="btn" style="background: var(--text)" onclick="salvaCambio()">Salva Modifica</button>
         <button class="btn btn-grey" onclick="resetSingolo()">Ripristina Originale</button>
@@ -135,11 +130,8 @@
     let calendar;
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (!state.rot) {
-            document.getElementById('stepWelcome').style.display = 'block';
-        } else if (!state.ripSingDate) {
-            document.getElementById('stepRiposoInfo').style.display = 'block';
-        }
+        if (!state.rot) document.getElementById('stepWelcome').style.display = 'block';
+        else if (!state.ripSingDate) document.getElementById('stepRiposoInfo').style.display = 'block';
         aggiornaEtichette();
         inizializzaCalendario();
     });
@@ -164,7 +156,6 @@
         const sel = document.getElementById('rotSelect');
         document.getElementById('activeRotLabel').innerText = [...sel.options].find(o => o.value === state.rot)?.text || "Configurazione";
         
-        // Popola tendina turni per config
         const s = document.getElementById('turnoDopoSelect');
         s.innerHTML = "";
         const lista = (depositi[state.rot] || []).map((t, i) => ({t: t.toUpperCase(), i: i}))
@@ -174,7 +165,6 @@
             let o = document.createElement('option'); o.value = item.i; o.textContent = item.t; s.appendChild(o);
         });
 
-        // Popola tendina modifiche
         const se = document.getElementById('editTurnoSelect');
         se.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
         let univoci = [];
@@ -197,21 +187,11 @@
 
     function gestisciClickData(date) {
         selectedDate = date;
-        if (!state.rot) { 
-            document.getElementById('stepRotation').style.display = 'block';
-        } else if (!state.ripSingDate) {
-            document.getElementById('dateToConfirm').innerText = date;
+        if (!state.rot) document.getElementById('stepRotation').style.display = 'block';
+        else if (!state.ripSingDate) {
+            document.getElementById('dateToConfirm').innerText = formattaData(date);
             document.getElementById('stepConfirmRiposo').style.display = 'block';
-        } else if (!state.startRotDate) {
-            // Se è il giorno dopo il riposo
-            const ripSec = new Date(state.ripSingDate).getTime();
-            const clickSec = new Date(date).getTime();
-            if (clickSec === ripSec + 86400000) {
-                document.getElementById('stepTurnoDopo').style.display = 'block';
-            } else {
-                alert("Devi selezionare il giorno DOPO il riposo per configurare i turni.");
-            }
-        } else {
+        } else if (state.startRotDate) {
             apriDettaglio(date);
         }
     }
@@ -219,13 +199,17 @@
     function confermaGiornoRiposo() {
         state.ripSingDate = selectedDate;
         salva();
-        chiudiModali();
-        alert("Ottimo. Ora clicca il giorno immediatamente SUCCESSIVO al riposo per scegliere il turno.");
-        calendar.refetchEvents();
+        // Calcola automaticamente il giorno dopo per il titolo del pop-up successivo
+        let d = new Date(selectedDate);
+        d.setDate(d.getDate() + 1);
+        let giornoDopoStr = d.toISOString().split('T')[0];
+        state.startRotDate = giornoDopoStr; // Impostiamo già la data di inizio rotazione
+        
+        document.getElementById('nextDayTitle').innerText = "Turno del " + formattaData(giornoDopoStr);
+        prossimoStep('stepConfirmRiposo', 'stepTurnoDopo');
     }
 
     function avviaCalendarioFinale() {
-        state.startRotDate = selectedDate;
         state.turnoIdx = parseInt(document.getElementById('turnoDopoSelect').value);
         salva();
         chiudiModali();
@@ -236,13 +220,12 @@
         if (!state.ripSingDate) return [];
         let evs = [];
         const turni = depositi[state.rot] || [];
-        const refRip = Math.floor(new Date(state.ripSingDate).getTime() / 86400000);
+        const refRip = Math.floor(new Date(state.ripRipDate || state.ripSingDate).getTime() / 86400000);
         
-        for (let i = -60; i < 400; i++) {
+        for (let i = -100; i < 500; i++) {
             let curSec = (refRip + i) * 86400000;
             let dStr = new Date(curSec).toISOString().split('T')[0];
             
-            // Logica Riposi (6+1, 6+2)
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
             let tFinal = isR ? "RIPOSO" : "-";
@@ -261,23 +244,20 @@
                 }
             }
 
-            // Aggiungi evento
             let cName = tFinal === 'RIPOSO' ? 'bg-riposo' : (tFinal === 'DISP' ? 'bg-disp' : 'bg-turno');
             let displayTitle = tFinal;
 
-            // Se c'è variazione
             if (state.variazioni[dStr]) {
                 displayTitle = state.variazioni[dStr];
                 cName = 'bg-modificato';
             }
-
             evs.push({ title: displayTitle, start: dStr, className: cName, extendedProps: { originale: tFinal } });
         }
         return evs;
     }
 
     function apriDettaglio(date) {
-        document.getElementById('viewDate').innerText = date;
+        document.getElementById('viewDate').innerText = formattaData(date);
         const ev = calendar.getEvents().find(e => e.startStr === date);
         const orig = ev ? ev.extendedProps.originale : "-";
         const attuale = state.variazioni[date];
@@ -294,20 +274,21 @@
 
     function salvaCambio() {
         state.variazioni[selectedDate] = document.getElementById('editTurnoSelect').value;
-        salva();
-        chiudiModali();
-        calendar.refetchEvents();
+        salva(); chiudiModali(); calendar.refetchEvents();
     }
 
     function resetSingolo() {
         delete state.variazioni[selectedDate];
-        salva();
-        chiudiModali();
-        calendar.refetchEvents();
+        salva(); chiudiModali(); calendar.refetchEvents();
+    }
+
+    function formattaData(iso) {
+        let d = iso.split('-');
+        return `${d[2]}/${d[1]}/${d[0]}`;
     }
 
     function salva() { localStorage.setItem('appTurniState', JSON.stringify(state)); }
-    function resetTotale() { if(confirm("Vuoi cancellare tutto e rifare la configurazione?")) { localStorage.clear(); location.reload(); } }
+    function resetTotale() { if(confirm("Vuoi cancellare tutto?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
