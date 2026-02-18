@@ -49,7 +49,7 @@
         .bg-riposo { background-color: var(--riposo) !important; }
         .bg-disp { background-color: var(--disp) !important; }
         .bg-turno { background-color: var(--turno) !important; }
-        .bg-modificato { background-color: #f5365c !important; } /* Colore per turni cambiati manualmente */
+        .bg-modificato { background-color: #f5365c !important; }
 
         #modal { 
             display: none; position: fixed; z-index: 9999; 
@@ -82,10 +82,9 @@
 </div>
 
 <div id="welcomeBanner">
-    <strong>Istruzioni:</strong><br>
-    1. Clicca sul giorno del tuo <strong>riposo singolo</strong>.<br>
-    2. Clicca sul <strong>giorno dopo</strong> per avviare la rotazione.<br>
-    👉 Per modificare un singolo giorno già impostato, cliccaci sopra.
+    <strong>Istruzioni per il setup:</strong><br>
+    1. Clicca sul giorno del tuo <strong>riposo singolo</strong> (es. il 19) e premi il tasto verde.<br>
+    2. Clicca sul <strong>giorno successivo al riposo</strong> (es. il 20), seleziona il turno che devi fare e premi il tasto blu per avviare la rotazione automatica.
 </div>
 
 <div id="calendar"></div>
@@ -95,17 +94,18 @@
         <h3 id="modalDate" style="margin-top:0; color:var(--text)">Data</h3>
         
         <div id="singleEditSection">
-            <span class="section-label">Modifica solo questo giorno</span>
+            <span class="section-label">Modifica questo singolo giorno</span>
             <select id="singleTurnoSelect"></select>
-            <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio Giorno</button>
-            <button class="btn" style="background: #adb5bd; color: white;" onclick="resetGiornoSingolo()">Ripristina Turno Originale</button>
+            <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
+            <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
         </div>
 
         <div id="rotationSection" style="margin-top: 20px; border-top: 2px solid #f4f5f7; padding-top: 15px;">
-            <span class="section-label">Configurazione Rotazione Generale</span>
+            <span class="section-label">Configurazione Iniziale</span>
             <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo</button>
+            <span class="section-label" style="margin-top:10px">Turno del giorno dopo il riposo:</span>
             <select id="turnoSelectRotation"></select>
-            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Avvia Rotazione da qui</button>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Avvia Rotazione Automatica</button>
         </div>
         
         <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
@@ -113,6 +113,7 @@
 </div>
 
 <script>
+    // La tua sequenza reale di rotazione
     const turniDB = [
         "disp","4p05","4p29","4p07","disp","4p18","4p09","4p04",
         "4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16",
@@ -122,6 +123,11 @@
         "m204","4p12","m205","4p26","4p20"
     ];
 
+    // Creiamo una mappa ordinata per le tendine: [ { nome: "4p01", indexOriginale: 13 }, ... ]
+    const turniOrdinati = turniDB
+        .map((nome, index) => ({ nome: nome.toUpperCase(), indexOriginale: index }))
+        .sort((a, b) => a.nome.localeCompare(b.nome, undefined, {numeric: true, sensitivity: 'base'}));
+
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, variazioni: {} };
     let selectedDate = null;
     let calendar;
@@ -129,17 +135,17 @@
     document.addEventListener('DOMContentLoaded', function() {
         if(!state.riposoStart) document.getElementById('welcomeBanner').style.display = 'block';
 
-        // Popola entrambe le select
         const selects = ['singleTurnoSelect', 'turnoSelectRotation'];
         selects.forEach(id => {
             const s = document.getElementById(id);
             if (id === 'singleTurnoSelect') {
                 let optR = document.createElement('option'); optR.value = "RIPOSO"; optR.textContent = "RIPOSO"; s.appendChild(optR);
             }
-            turniDB.forEach((t, i) => {
+            // Usiamo la lista ordinata per popolare il menu
+            turniOrdinati.forEach(item => {
                 let opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = (i + 1) + ". " + t.toUpperCase();
+                opt.value = item.indexOriginale;
+                opt.textContent = item.nome;
                 s.appendChild(opt);
             });
         });
@@ -152,12 +158,11 @@
             height: 'auto',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: function(info) { apriModal(info.dateStr); },
-            eventClick: function(info) { apriModal(info.event.startStr); }, // Apre modal anche cliccando sul turno
+            eventClick: function(info) { apriModal(info.event.startStr); },
             events: function(info, successCallback) { successCallback(calcolaCalendario()); }
         });
         calendar.render();
 
-        // Swipe
         let touchstartX = 0; let touchendX = 0;
         calendarEl.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, false);
         calendarEl.addEventListener('touchend', e => { touchendX = e.changedTouches[0].screenX; handleSwipe(); }, false);
@@ -177,7 +182,6 @@
             let d = new Date(currentNum * 86400000);
             let dStr = d.toISOString().split('T')[0];
 
-            // Se c'è una variazione manuale per questo giorno
             if (state.variazioni && state.variazioni[dStr] !== undefined) {
                 let v = state.variazioni[dStr];
                 let title = v === "RIPOSO" ? "RIPOSO" : turniDB[v].toUpperCase();
@@ -216,7 +220,6 @@
     function apriModal(date) {
         selectedDate = date;
         document.getElementById('modalDate').innerText = date;
-        // Mostra/Nascondi sezioni
         document.getElementById('rotationSection').style.display = state.rotazioneStart ? 'none' : 'block';
         document.getElementById('singleEditSection').style.display = state.rotazioneStart ? 'block' : 'none';
         document.getElementById('modal').style.display = 'block';
@@ -230,25 +233,17 @@
         state.variazioni[selectedDate] = val === "RIPOSO" ? "RIPOSO" : parseInt(val);
         salva();
     }
-
-    function resetGiornoSingolo() {
-        if (state.variazioni) delete state.variazioni[selectedDate];
-        salva();
-    }
-
-    function setRiposoSingolo() { 
-        state.riposoStart = selectedDate; state.rotazioneStart = null; state.variazioni = {};
-        document.getElementById('welcomeBanner').style.display = 'none';
-        salva(); 
-    }
+    function resetGiornoSingolo() { if (state.variazioni) delete state.variazioni[selectedDate]; salva(); }
+    function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; state.variazioni = {}; salva(); }
     
     function avviaRotazione() {
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelectRotation').value);
+        document.getElementById('welcomeBanner').style.display = 'none';
         salva();
     }
     
-    function resetTotale() { if(confirm("Resettare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Cancellare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
 </script>
 </body>
