@@ -81,6 +81,7 @@
         <div id="stepActionArea"></div>
         <div id="stepButtons">
             <button id="btnConfirmDate" class="btn" style="background: var(--riposo); display:none;" onclick="procediAlTurno()">Sì, conferma data</button>
+            <button id="btnConfirmFinal" class="btn" style="background: var(--riposo); display:none;" onclick="attivaRotazioneFinale()">Conferma Turno e Attiva</button>
             <button id="btnCloseStep" class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Seleziona</button>
         </div>
     </div>
@@ -112,6 +113,8 @@
         depositoAttivo: null, riposoStart: null, rotazioneStart: null, turnoIndex: null, variazioni: {}, setupStep: 0 
     };
     let selectedDate = null;
+    let tempTurnoIndex = null;
+    let tempRotDate = null;
     let calendar;
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -144,6 +147,7 @@
             mostraStep("Passo 2", "Seleziona la data di un tuo riposo singolo");
             document.getElementById('stepDateDisplay').innerText = "";
             document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnConfirmFinal').style.display = "none";
             document.getElementById('btnCloseStep').innerText = "Seleziona";
         }
     }
@@ -154,10 +158,9 @@
             document.getElementById('stepDateDisplay').innerText = formattaData(date);
             document.getElementById('stepDesc').innerText = "Hai selezionato questa data. Confermi che è un riposo singolo?";
             document.getElementById('btnConfirmDate').style.display = "block";
+            document.getElementById('btnConfirmFinal').style.display = "none";
             document.getElementById('btnCloseStep').innerText = "Cambia data";
             document.getElementById('stepModal').style.display = 'block';
-        } else if (state.setupStep === 2) {
-            return;
         } else if (state.setupStep >= 3) {
             document.getElementById('modalDate').innerText = formattaData(date);
             popolaCambioSingolo();
@@ -171,27 +174,30 @@
         
         let d = new Date(selectedDate);
         d.setDate(d.getDate() + 1);
-        let domaniStr = d.toISOString().split('T')[0];
+        tempRotDate = d.toISOString().split('T')[0];
         
         document.getElementById('btnConfirmDate').style.display = "none";
         document.getElementById('btnCloseStep').style.display = "none";
         document.getElementById('stepTitle').innerText = "Passo 3";
-        
-        // MODIFICA: MOSTRA DATA DEL GIORNO SUCCESSIVO (LAVORATIVO)
-        document.getElementById('stepDateDisplay').innerText = formattaData(domaniStr);
+        document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
         document.getElementById('stepDesc').innerText = "Seleziona il turno per questo giorno:";
         
         const area = document.getElementById('stepActionArea');
         area.innerHTML = `<select id="turnoSelectRotation"><option value="" disabled selected>Seleziona il turno...</option>${getOptionsTurni()}</select>`;
         
         document.getElementById('turnoSelectRotation').onchange = function() {
-            state.turnoIndex = parseInt(this.value);
-            state.rotazioneStart = domaniStr; 
-            state.setupStep = 3; 
-            salvaLocal();
-            location.reload();
+            tempTurnoIndex = parseInt(this.value);
+            document.getElementById('btnConfirmFinal').style.display = "block";
         };
         document.getElementById('stepModal').style.display = 'block';
+    }
+
+    function attivaRotazioneFinale() {
+        state.turnoIndex = tempTurnoIndex;
+        state.rotazioneStart = tempRotDate;
+        state.setupStep = 3;
+        salvaLocal();
+        location.reload();
     }
 
     function mostraStep(titolo, desc) {
