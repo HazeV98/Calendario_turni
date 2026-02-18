@@ -58,9 +58,9 @@
         <h3 style="color: var(--turno); margin-top: 0;">Benvenuto!</h3>
         <p style="font-size: 14px; line-height: 1.5;">Configuriamo il tuo calendario in 3 passi:</p>
         <ul style="font-size: 14px; padding-left: 20px;">
-            <li>Scegli la tua divisione.</li>
-            <li>Seleziona il tuo 1° riposo singolo.</li>
-            <li>Seleziona il turno del giorno dopo.</li>
+            <li>Seleziona la tua rotazione.</li>
+            <li>Seleziona il tuo 1° riposo singolo sul calendario.</li>
+            <li>Seleziona il turno del giorno successivo al riposo.</li>
         </ul>
         <button class="btn" style="background: var(--turno)" onclick="vaiAStep2()">Ho capito, iniziamo</button>
     </div>
@@ -68,8 +68,8 @@
 
 <div id="depotModal">
     <div class="modal-content">
-        <h3 style="margin-top: 0;">Divisione</h3>
-        <p style="font-size: 14px;">In quale deposito lavori?</p>
+        <h3 style="margin-top: 0;">Rotazione</h3>
+        <p style="font-size: 14px;">Seleziona la tua <strong>rotazione</strong> di appartenenza:</p>
         <select id="depotSelectMain">
             <option value="rot_fnove">Rotazione F.Nove</option>
             <option value="spez_fnove">Spezzati F.Nove</option>
@@ -80,7 +80,7 @@
             <option value="rot_lido">Rotazione Lido</option>
             <option value="spez_lido">Spezzati Lido</option>
         </select>
-        <button class="btn" style="background: var(--riposo)" onclick="confermaDeposito()">Conferma Scelta</button>
+        <button class="btn" style="background: var(--riposo)" onclick="confermaDeposito()">Conferma Rotazione</button>
     </div>
 </div>
 
@@ -149,7 +149,7 @@
 
     function aggiornaUIEData() {
         const sel = document.getElementById('depotSelectMain');
-        const label = [...sel.options].find(o => o.value === state.depositoAttivo)?.text || "Divisione";
+        const label = [...sel.options].find(o => o.value === state.depositoAttivo)?.text || "Rotazione";
         document.getElementById('activeDepotLabel').innerText = label;
         popolaTendineSetup(state.depositoAttivo);
         popolaTendineCambioUniversale();
@@ -158,13 +158,10 @@
     function popolaTendineSetup(depKey) {
         const sRotation = document.getElementById('turnoSelectRotation');
         sRotation.innerHTML = "";
-        
-        // Ordine numerico/alfabetico
         const ordinati = depositi[depKey]
             .map((n, i) => ({ n: n.toUpperCase(), i: i }))
             .filter(x => x.n !== "DISP")
             .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}));
-
         ordinati.forEach(item => {
             let opt = document.createElement('option'); opt.value = item.i; opt.textContent = item.n; sRotation.appendChild(opt);
         });
@@ -173,15 +170,12 @@
     function popolaTendineCambioUniversale() {
         const sSingle = document.getElementById('singleTurnoSelect');
         sSingle.innerHTML = "";
-
         let optD = document.createElement('option'); optD.value = "DISPONIBILE"; optD.textContent = "DISPONIBILE"; sSingle.appendChild(optD);
         let optR = document.createElement('option'); optR.value = "RIPOSO"; optR.textContent = "RIPOSO"; sSingle.appendChild(optR);
-
         let tutti = [];
         for (let d in depositi) {
             depositi[d].forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); });
         }
-        
         let univoci = [...new Set(tutti)].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
         univoci.forEach(t => {
             let opt = document.createElement('option'); opt.value = t; opt.textContent = t; sSingle.appendChild(opt);
