@@ -42,6 +42,7 @@
         .instruction-text { font-size: 15px; line-height: 1.6; color: #525f7f; margin-bottom: 10px; }
         .deposito-tag { font-size: 10px; background: #eef2ff; color: var(--turno); padding: 4px 8px; border-radius: 5px; font-weight: bold; }
         .date-display { font-weight: bold; color: var(--turno); font-size: 1.1em; display: block; margin-bottom: 10px; }
+        .info-cambio { font-size: 0.9em; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid var(--turno); text-align: left; }
     </style>
 </head>
 <body>
@@ -90,7 +91,7 @@
 <div id="editModal">
     <div class="modal-content">
         <h3 id="modalDate" style="margin-top:0;">Data</h3>
-        <p id="currentTurnoLabel" style="font-weight: bold; color: var(--turno); margin-bottom: 5px;"></p>
+        <div id="infoTurniArea" class="info-cambio"></div>
         <p class="instruction-text">Cambia il turno per questo giorno:</p>
         <select id="singleTurnoSelect"></select>
         <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
@@ -197,11 +198,38 @@
     }
 
     function popolaCambioSingolo() {
-        // Trova il turno attualmente visualizzato nel calendario per quel giorno
-        const events = calendar.getEvents();
-        const currentEvent = events.find(e => e.startStr === selectedDate);
-        const currentTitle = currentEvent ? currentEvent.title : "Nessuno";
-        document.getElementById('currentTurnoLabel').innerText = "Turno attuale: " + currentTitle;
+        const area = document.getElementById('infoTurniArea');
+        const dStr = selectedDate;
+        
+        // Calcolo turno originale (da rotazione)
+        let originale = "N.D.";
+        let turni = depositi[state.depositoAttivo];
+        let ref = stringToNum(state.riposoStart);
+        let curr = stringToNum(dStr);
+        let pos = ((curr - ref + 6) % 15 + 15) % 15;
+        let isR = (pos === 6 || pos === 13 || pos === 14);
+        
+        if (isR) {
+            originale = "RIPOSO";
+        } else {
+            let rot = stringToNum(state.rotazioneStart);
+            if (curr >= rot) {
+                let w = 0;
+                for (let j = rot; j < curr; j++) {
+                    let pJ = ((j - ref + 6) % 15 + 15) % 15;
+                    if (!(pJ === 6 || pJ === 13 || pJ === 14)) w++;
+                }
+                originale = turni[(state.turnoIndex + Math.floor(w/2)) % turni.length].toUpperCase();
+            }
+        }
+
+        const attuale = state.variazioni[dStr] || originale;
+        
+        let html = `<div><strong>Turno attuale:</strong> ${attuale}</div>`;
+        if (state.variazioni[dStr]) {
+            html += `<div style="color: #f5365c; font-size: 0.85em; margin-top:5px;"><strong>Originale da rotazione:</strong> ${originale}</div>`;
+        }
+        area.innerHTML = html;
 
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
