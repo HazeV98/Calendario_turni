@@ -29,144 +29,114 @@
             align-items: center; 
             background: white; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            position: sticky; top: 0; z-index: 100;
         }
 
-        /* Banner aggiornato */
         #welcomeBanner {
-            background: #ffffff;
-            padding: 20px;
-            margin: 15px;
-            border-radius: 15px;
-            border-left: 6px solid var(--riposo);
-            font-size: 15px;
-            line-height: 1.5;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            display: none;
+            background: white; padding: 20px; margin: 15px; border-radius: 15px;
+            border-left: 6px solid var(--riposo); font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: none;
         }
 
         #calendar { 
-            background: white; 
-            padding: 10px; 
-            border-radius: 15px;
-            margin: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: white; padding: 10px; border-radius: 15px;
+            margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        /* Correzione Layout Schiacciato */
-        .fc .fc-daygrid-day-frame { 
-            min-height: 100px !important; /* Celle più alte */
-        }
-        
+        .fc .fc-daygrid-day-frame { min-height: 100px !important; }
         .fc-event { 
-            border: none !important; 
-            padding: 6px !important; 
-            margin: 2px 1px !important;
-            border-radius: 6px !important; 
-            font-weight: 700 !important; 
-            font-size: 0.9em !important;
+            border: none !important; padding: 5px !important; 
+            margin: 2px 0 !important; border-radius: 6px !important; 
+            font-weight: 700 !important; font-size: 0.85em !important;
             text-align: center;
         }
 
         .bg-riposo { background-color: var(--riposo) !important; }
         .bg-disp { background-color: var(--disp) !important; }
         .bg-turno { background-color: var(--turno) !important; }
+        .event-nota { background: none !important; color: #f5365c !important; font-size: 0.75em !important; border: 1px dashed #f5365c !important; }
 
-        /* Modal */
         #modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 9999; 
+            display: none; position: fixed; z-index: 9999; 
             left: 0; top: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); 
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            overflow-y: auto;
         }
         
         .modal-content { 
-            background: white; 
-            margin: 10% auto; 
-            padding: 30px; 
-            width: 90%; 
-            max-width: 400px; 
-            border-radius: 25px; 
-            box-sizing: border-box;
+            background: white; margin: 5% auto; padding: 25px; 
+            width: 90%; max-width: 400px; border-radius: 25px; 
         }
 
-        select { 
-            width: 100%; 
-            margin: 15px 0; 
-            padding: 15px; 
-            border: 2px solid #e9ecef; 
-            border-radius: 12px; 
-            font-size: 16px;
-            -webkit-appearance: none;
+        textarea { 
+            width: 100%; margin: 10px 0; padding: 12px; 
+            border: 2px solid #e9ecef; border-radius: 12px; 
+            font-size: 15px; font-family: inherit; resize: none;
         }
+
+        select { width: 100%; margin: 10px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; }
 
         .btn { 
-            padding: 16px; 
-            border: none; 
-            border-radius: 14px; 
-            color: white; 
-            cursor: pointer; 
-            width: 100%; 
-            margin-top: 10px; 
-            font-weight: bold;
-            font-size: 16px;
+            padding: 15px; border: none; border-radius: 14px; 
+            color: white; cursor: pointer; width: 100%; 
+            margin-top: 8px; font-weight: bold; font-size: 15px;
         }
         
-        .btn-reset { background: #f5365c; padding: 10px 18px; width: auto; font-size: 13px; border-radius: 10px; }
+        .btn-reset { background: #f5365c; padding: 10px 18px; width: auto; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div id="topBar">
-    <h2 style="margin:0; font-size: 22px;">Calendario Turni</h2>
+    <h2 style="margin:0; font-size: 20px;">Calendario Turni</h2>
     <button class="btn btn-reset" onclick="resetTotale()">RESET</button>
 </div>
 
 <div id="welcomeBanner">
-    <strong>Istruzioni:</strong><br>
-    1. Clicca sul giorno del tuo <strong>riposo singolo</strong> e premi il tasto verde.<br>
-    2. Clicca sul <strong>giorno dopo</strong>, seleziona il turno corretto dalla lista e premi il tasto blu.
+    <strong>Configurazione Iniziale:</strong><br>
+    1. Clicca sul giorno del <strong>riposo singolo</strong> (verde).<br>
+    2. Clicca sul <strong>giorno dopo</strong>, scegli il turno e premi il tasto blu.
 </div>
 
 <div id="calendar"></div>
 
 <div id="modal">
     <div class="modal-content">
-        <h3 id="modalDate" style="margin-top:0; color:#32325d">Configura Giorno</h3>
+        <h3 id="modalDate" style="margin-top:0; color:var(--text)">Data</h3>
         
-        <p style="font-size: 13px; color: #8898aa; margin-bottom: 5px;">AZIONE 1</p>
-        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta Riposo Singolo</button>
-        
-        <div style="margin-top: 25px; border-top: 2px solid #f4f5f7; padding-top: 20px;">
-            <p style="font-size: 13px; color: #8898aa; margin-bottom: 5px;">AZIONE 2 (Giorno dopo il riposo)</p>
+        <div style="margin-bottom: 20px;">
+            <label style="font-size: 12px; font-weight: bold; color: #8898aa;">NOTE GIORNALIERE</label>
+            <textarea id="notaArea" rows="2" placeholder="Scrivi qui (es. straordinari, cambi...)"></textarea>
+            <button class="btn" style="background: #525f7f;" onclick="salvaNota()">Salva Nota</button>
+        </div>
+
+        <div style="border-top: 2px solid #f4f5f7; padding-top: 15px;">
+            <label style="font-size: 12px; font-weight: bold; color: #8898aa;">CONFIGURAZIONE ROTAZIONE</label>
+            <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta Riposo Singolo</button>
             <select id="turnoSelect"></select>
             <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Turno e Rotazione</button>
         </div>
         
-        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 20px;" onclick="chiudiModal()">Chiudi</button>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
     </div>
 </div>
 
 <script>
+    // Nuova lista aggiornata con 45 turni
     const turniDB = [
         "disp","4p05","4p29","4p07","disp","4p18","4p09","4p04",
         "4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16",
         "4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11",
-        "4p14","disp","4p17","4p37","4p35","4p03","4p23","4p22",
-        "4p31","4p02","4p13","disp","4p36","4p38","disp","m204",
-        "4p12","m205","4p26","4p20"
+        "4p14","disp","4p17","disp","4p37","4p35","4p03","4p23",
+        "4p22","4p31","4p02","4p13","disp","4p36","4p38","disp",
+        "m204","4p12","m205","4p26","4p20"
     ];
 
-    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0 };
-    
+    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, note: {} };
+    let selectedDate = null;
+
     document.addEventListener('DOMContentLoaded', function() {
-        if(!state.riposoStart) {
-            document.getElementById('welcomeBanner').style.display = 'block';
-        }
+        if(!state.riposoStart) document.getElementById('welcomeBanner').style.display = 'block';
 
         const select = document.getElementById('turnoSelect');
         turniDB.forEach((t, i) => {
@@ -176,7 +146,8 @@
             select.appendChild(opt);
         });
 
-        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'it',
             firstDay: 1,
@@ -186,11 +157,20 @@
             events: function(info, successCallback) { successCallback(calcolaCalendario()); }
         });
         calendar.render();
+        window.myCalendar = calendar;
     });
 
     function calcolaCalendario() {
-        if (!state.riposoStart) return [];
         let evs = [];
+        
+        // Note
+        for (let date in state.note) {
+            if (state.note[date]) {
+                evs.push({ title: "📝 " + state.note[date], start: date, className: 'event-nota', allDay: true });
+            }
+        }
+
+        if (!state.riposoStart) return evs;
         let refNum = stringToNumber(state.riposoStart);
         
         for (let i = -60; i < 400; i++) {
@@ -228,13 +208,18 @@
 
     function apriModal(date) {
         selectedDate = date;
-        const d = new Date(date);
-        document.getElementById('modalDate').innerText = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+        document.getElementById('modalDate').innerText = date;
+        document.getElementById('notaArea').value = state.note[date] || "";
         document.getElementById('modal').style.display = 'block';
     }
     
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
     
+    function salvaNota() {
+        state.note[selectedDate] = document.getElementById('notaArea').value;
+        salva();
+    }
+
     function setRiposoSingolo() { 
         state.riposoStart = selectedDate; 
         state.rotazioneStart = null; 
