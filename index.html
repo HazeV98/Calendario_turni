@@ -141,7 +141,7 @@
 
     function checkGuidaIniziale() {
         if (state.setupStep === 1) {
-            mostraStep("Passo 2", "Seleziona sul calendario il giorno di un tuo 1° riposo singolo.");
+            mostraStep("Passo 2", "Seleziona sul calendario il giorno di un tuo riposo singolo.");
             document.getElementById('stepDateDisplay').innerText = "";
             document.getElementById('btnConfirmDate').style.display = "none";
         }
@@ -152,7 +152,7 @@
         if (state.setupStep === 1) {
             // Conferma data riposo
             document.getElementById('stepDateDisplay').innerText = formattaData(date);
-            document.getElementById('stepDesc').innerText = "Hai selezionato questa data. Confermi che è il tuo 1° riposo singolo?";
+            document.getElementById('stepDesc').innerText = "Hai selezionato questa data. Confermi che è un riposo singolo?";
             document.getElementById('btnConfirmDate').style.display = "block";
             document.getElementById('stepModal').style.display = 'block';
         } else if (state.setupStep === 2) {
@@ -276,3 +276,4 @@
 </script>
 </body>
 </html>
+
