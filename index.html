@@ -1,49 +1,5 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestione Turni F. Nove</title>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <style>
-        :root { --riposo: #28a745; --disp: #fd7e14; --turno: #007bff; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f0f2f5; font-size: 14px; }
-        #calendar { background: white; padding: 10px; min-height: 90vh; }
-        .fc-toolbar-title { font-size: 1.2em !important; }
-        .turno-item { font-size: 0.85em; padding: 2px; border-radius: 3px; color: white; margin-bottom: 1px; }
-        .bg-riposo { background-color: var(--riposo) !important; border: none !important; }
-        .bg-disp { background-color: var(--disp) !important; border: none !important; }
-        .bg-turno { background-color: var(--turno) !important; border: none !important; }
-        /* Modal semplice */
-        #modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 15% auto; padding: 20px; width: 85%; border-radius: 10px; }
-        select, textarea { width: 100%; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; color: white; cursor: pointer; width: 100%; margin-top: 5px; }
-    </style>
-</head>
-<body>
-
-<div id="calendar"></div>
-
-<div id="modal">
-    <div class="modal-content">
-        <h3 id="modalDate">Data</h3>
-        <p>Scegli un'azione per questo giorno:</p>
-        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo Singolo</button>
-        <hr>
-        <label>Imposta Rotazione da questo giorno:</label>
-        <select id="turnoSelect"></select>
-        <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Avvia Rotazione</button>
-        <hr>
-        <label>Nota / Cambio:</label>
-        <textarea id="notaArea" rows="2" placeholder="Scrivi qui..."></textarea>
-        <button class="btn" style="background: #6c757d" onclick="salvaNota()">Salva Nota</button>
-        <button class="btn" style="background: #000; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
-    </div>
-</div>
-
 <script>
-    // DATABASE COMPLETO TURNI (ESTRATTI DAL TUO CSV)
+    // DATABASE COMPLETO TURNI
     const turniDB = [
         {s: "4P05", i: "P. Roma 04.55", f: "11.43"}, {s: "4P29", i: "F. Nove 18.04", f: "00.16"},
         {s: "4P07", i: "F. Nove 12.43", f: "19.43"}, {s: "Disp", i: "Disponibile", f: ""},
@@ -94,36 +50,50 @@
     function calcolaCalendario() {
         if (!state.riposoStart) return [];
         let evs = [];
-        let start = new Date(state.riposoStart);
-        let end = new Date(start); end.setFullYear(start.getFullYear() + 1);
         
-        let curr = new Date(start);
-        curr.setDate(curr.getDate() - 60); // Calcola anche un po' di passato
+        // Data di riferimento (quella che hai cliccato come riposo singolo)
+        let refDate = new Date(state.riposoStart);
+        refDate.setHours(0,0,0,0);
 
-        while(curr < end) {
-            let diff = Math.floor((curr - start) / (1000*60*60*24));
-            let posCiclo = ((diff % 15) + 15) % 15; // Ciclo 15gg: 0-5 lavoro, 6 riposo, 7-12 lavoro, 13-14 riposo
+        // Calcoliamo 6 mesi prima e 6 mesi dopo per coprire il calendario
+        let startDate = new Date(refDate); startDate.setMonth(startDate.getMonth() - 6);
+        let endDate = new Date(refDate); endDate.setMonth(endDate.getMonth() + 6);
 
-            let isRiposo = (posCiclo === 6 || posCiclo === 13 || posCiclo === 14);
+        let curr = new Date(startDate);
+
+        while(curr <= endDate) {
             let dateStr = curr.toISOString().split('T')[0];
+            
+            // Differenza di giorni tra la data corrente e il riferimento
+            let diffDays = Math.round((curr - refDate) / (1000 * 60 * 60 * 24));
+            
+            // Logica del ciclo di 15 giorni (6L - 1R - 6L - 2R)
+            // Facciamo in modo che il giorno di riferimento (diffDays = 0) sia la posizione 6 (il riposo singolo)
+            let posCiclo = ((diffDays + 6) % 15 + 15) % 15;
+
+            // Riposi: pos 6 (singolo), pos 13 e 14 (doppio)
+            let isRiposo = (posCiclo === 6 || posCiclo === 13 || posCiclo === 14);
 
             if (isRiposo) {
                 evs.push({ title: 'RIPOSO', start: dateStr, className: 'bg-riposo' });
             } else if (state.rotazioneStart) {
-                let diffRot = Math.floor((curr - new Date(state.rotazioneStart)) / (1000*60*60*24));
-                if (diffRot >= 0) {
-                    // Conta quanti sono giorni di lavoro effettivi per la rotazione
-                    let giorniLavoro = 0;
-                    let temp = new Date(state.rotazioneStart);
-                    while(temp < curr) {
-                        let d = Math.floor((temp - start) / (1000*60*60*24));
-                        let p = ((d % 15) + 15) % 15;
-                        if (!(p === 6 || p === 13 || p === 14)) giorniLavoro++;
-                        temp.setDate(temp.getDate() + 1);
+                let rotStart = new Date(state.rotazioneStart);
+                rotStart.setHours(0,0,0,0);
+                
+                if (curr >= rotStart) {
+                    // Contiamo quanti GIORNI LAVORATIVI sono passati dall'inizio della rotazione
+                    let workingDaysCount = 0;
+                    let tempDate = new Date(rotStart);
+                    while (tempDate < curr) {
+                        let dDiff = Math.round((tempDate - refDate) / (1000 * 60 * 60 * 24));
+                        let pCiclo = ((dDiff + 6) % 15 + 15) % 15;
+                        if (!(pCiclo === 6 || pCiclo === 13 || pCiclo === 14)) workingDaysCount++;
+                        tempDate.setDate(tempDate.getDate() + 1);
                     }
+                    
                     // Ogni turno ripetuto 2 volte
-                    let idxTurno = (state.turnoIndex + Math.floor(giorniLavoro / 2)) % turniDB.length;
-                    let t = turniDB[idxTurno];
+                    let turnoIdx = (state.turnoIndex + Math.floor(workingDaysCount / 2)) % turniDB.length;
+                    let t = turniDB[turnoIdx];
                     evs.push({ 
                         title: t.s + "\n" + t.i + (t.f ? " - " + t.f : ""), 
                         start: dateStr, 
@@ -131,7 +101,11 @@
                     });
                 }
             }
-            if (state.note[dateStr]) evs.push({ title: "📝 " + state.note[dateStr], start: dateStr, color: 'transparent', textColor: '#000' });
+            
+            if (state.note[dateStr]) {
+                evs.push({ title: "📝 " + state.note[dateStr], start: dateStr, display: 'list-item', color: '#333' });
+            }
+
             curr.setDate(curr.getDate() + 1);
         }
         return evs;
@@ -148,10 +122,15 @@
 
     function setRiposoSingolo() {
         state.riposoStart = selectedDate;
+        state.rotazioneStart = null; // Reset rotazione se cambia il riposo per sicurezza
         salva();
     }
 
     function avviaRotazione() {
+        if (!state.riposoStart) {
+            alert("Devi prima impostare un giorno di riposo singolo!");
+            return;
+        }
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelect').value);
         salva();
@@ -167,5 +146,3 @@
         location.reload();
     }
 </script>
-</body>
-</html>
