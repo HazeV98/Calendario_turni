@@ -75,6 +75,11 @@
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, note: {} };
     let selectedDate = null;
 
+    function parseLocalDate(dateStr) {
+        let parts = dateStr.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const select = document.getElementById('turnoSelect');
         turniDB.forEach((t, i) => {
@@ -102,35 +107,45 @@
     function calcolaCalendario() {
         if (!state.riposoStart) return [];
         let evs = [];
-        let ref = new Date(state.riposoStart); ref.setHours(0,0,0,0);
-        let curr = new Date(ref); curr.setMonth(curr.getMonth() - 4);
-        let fine = new Date(ref); fine.setMonth(fine.getMonth() + 10);
+        let ref = parseLocalDate(state.riposoStart);
+        
+        let curr = new Date(ref);
+        curr.setMonth(curr.getMonth() - 6);
+        let fine = new Date(ref);
+        fine.setMonth(fine.getMonth() + 12);
 
         while(curr <= fine) {
-            let dStr = curr.toISOString().split('T')[0];
+            let y = curr.getFullYear();
+            let m = String(curr.getMonth() + 1).padStart(2, '0');
+            let d = String(curr.getDate()).padStart(2, '0');
+            let dStr = y + "-" + m + "-" + d;
+
             let diff = Math.round((curr - ref) / 86400000);
+            
+            // Logica: il giorno cliccato deve essere la posizione 6 (Riposo Singolo)
+            // Ciclo 15gg: 0-5 Lavoro, 6 RIPOSO SINGOLO, 7-12 Lavoro, 13-14 RIPOSO DOPPIO
             let pos = ((diff + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
 
             if (isR) {
-                evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo' });
+                evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
             } else if (state.rotazioneStart) {
-                let rotS = new Date(state.rotazioneStart); rotS.setHours(0,0,0,0);
+                let rotS = parseLocalDate(state.rotazioneStart);
                 if (curr >= rotS) {
                     let wDays = 0;
                     let temp = new Date(rotS);
                     while (temp < curr) {
-                        let dD = Math.round((temp - ref) / 86400000);
-                        let pC = ((dD + 6) % 15 + 15) % 15;
+                        let dDiff = Math.round((temp - ref) / 86400000);
+                        let pC = ((dDiff + 6) % 15 + 15) % 15;
                         if (!(pC === 6 || pC === 13 || pC === 14)) wDays++;
                         temp.setDate(temp.getDate() + 1);
                     }
                     let tIdx = (state.turnoIndex + Math.floor(wDays / 2)) % turniDB.length;
                     let t = turniDB[tIdx];
-                    evs.push({ title: t.s, start: dStr, className: (t.s === 'Disp' ? 'bg-disp' : 'bg-turno') });
+                    evs.push({ title: t.s, start: dStr, className: (t.s === 'Disp' ? 'bg-disp' : 'bg-turno'), allDay: true });
                 }
             }
-            if (state.note[dStr]) evs.push({ title: state.note[dStr], start: dStr, display: 'list-item', color: 'red' });
+            if (state.note[dStr]) evs.push({ title: state.note[dStr], start: dStr, display: 'list-item', color: 'red', allDay: true });
             curr.setDate(curr.getDate() + 1);
         }
         return evs;
