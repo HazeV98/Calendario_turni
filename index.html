@@ -7,15 +7,14 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         :root { --riposo: #28a745; --disp: #fd7e14; --turno: #007bff; --bg: #f8f9fa; }
-        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); }
-        #topBar { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 999; }
-        #calendar { background: white; padding: 10px; min-height: 90vh; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 50px; }
+        #topBar { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; border-bottom: 1px solid #ddd; }
+        #calendar { background: white; padding: 5px; min-height: 400px; }
         .bg-riposo { background-color: var(--riposo) !important; border: none !important; }
         .bg-disp { background-color: var(--disp) !important; border: none !important; }
         .bg-turno { background-color: var(--turno) !important; border: none !important; }
-        .fc-event-title { font-weight: bold; font-size: 0.85em; }
-        #modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 15px; box-sizing: border-box; }
+        #modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }
+        .modal-content { background: white; margin: 10px auto; padding: 20px; width: 90%; max-width: 400px; border-radius: 15px; box-sizing: border-box; }
         select, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .btn { padding: 12px; border: none; border-radius: 8px; color: white; cursor: pointer; width: 100%; margin-top: 8px; font-weight: bold; }
         .btn-reset { background: #dc3545; padding: 5px 10px; width: auto; font-size: 12px; }
@@ -25,7 +24,7 @@
 
 <div id="topBar">
     <h3 style="margin:0; font-size: 18px;">Calendario F. Nove</h3>
-    <button class="btn btn-reset" onclick="resetTotale()">Reset Totale</button>
+    <button class="btn btn-reset" onclick="resetTotale()">Reset</button>
 </div>
 
 <div id="calendar"></div>
@@ -34,22 +33,20 @@
     <div class="modal-content">
         <h3 id="modalDate">Data</h3>
         <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo Singolo</button>
-        <div style="margin-top: 20px; border-top: 1px solid #eee;">
+        <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
             <label style="font-size: 13px; font-weight: bold;">Avvia Rotazione da qui:</label>
             <select id="turnoSelect"></select>
-            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Rotazione (2gg x turno)</button>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Rotazione (2gg)</button>
         </div>
-        <div style="margin-top: 20px; border-top: 1px solid #eee;">
-            <label style="font-size: 13px; font-weight: bold;">Note / Cambi:</label>
-            <textarea id="notaArea" rows="2" placeholder="Es: Cambio con..."></textarea>
+        <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+            <textarea id="notaArea" rows="2" placeholder="Note..."></textarea>
             <button class="btn" style="background: #6c757d" onclick="salvaNota()">Salva Nota</button>
         </div>
-        <button class="btn" style="background: #000; margin-top: 20px;" onclick="chiudiModal()">Chiudi</button>
+        <button class="btn" style="background: #000; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
     </div>
 </div>
 
 <script>
-    // LISTA COMPLETA 43 TURNI DAL FILE CSV
     const turniDB = [
         {s:"4P05", i:"04.55", f:"11.43", li:"P. Roma"}, {s:"4P29", i:"18.04", f:"00.16", li:"F. Nove"},
         {s:"4P07", i:"12.43", f:"19.43", li:"F. Nove"}, {s:"Disp", i:"-", f:"-", li:"F. Nove"},
@@ -83,27 +80,33 @@
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
             opt.value = i;
-            opt.textContent = `${t.s} (${t.i}-${t.f}) - ${t.li}`;
+            opt.textContent = t.s + " (" + t.i + ")";
             select.appendChild(opt);
         });
 
-        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth', locale: 'it', firstDay: 1,
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'it',
+            firstDay: 1,
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
-            dateClick: (info) => apriModal(info.dateStr),
-            events: (info, success) => success(calcolaCalendario())
+            dateClick: function(info) { apriModal(info.dateStr); },
+            events: function(info, successCallback) {
+                successCallback(calcolaCalendario());
+            }
         });
         calendar.render();
-        if (!state.riposoStart) setTimeout(() => alert("Imposta il 1° RIPOSO SINGOLO."), 600);
+        if(!state.riposoStart) setTimeout(function(){ alert("Clicca sul 1° RIPOSO SINGOLO per iniziare!"); }, 500);
     });
 
     function calcolaCalendario() {
         if (!state.riposoStart) return [];
-        let evs = [], ref = new Date(state.riposoStart); ref.setHours(0,0,0,0);
+        let evs = [];
+        let ref = new Date(state.riposoStart); ref.setHours(0,0,0,0);
         let curr = new Date(ref); curr.setMonth(curr.getMonth() - 4);
-        let end = new Date(ref); end.setMonth(end.getMonth() + 10);
+        let fine = new Date(ref); fine.setMonth(fine.getMonth() + 10);
 
-        while(curr <= end) {
+        while(curr <= fine) {
             let dStr = curr.toISOString().split('T')[0];
             let diff = Math.round((curr - ref) / 86400000);
             let pos = ((diff + 6) % 15 + 15) % 15;
@@ -114,7 +117,8 @@
             } else if (state.rotazioneStart) {
                 let rotS = new Date(state.rotazioneStart); rotS.setHours(0,0,0,0);
                 if (curr >= rotS) {
-                    let wDays = 0, temp = new Date(rotS);
+                    let wDays = 0;
+                    let temp = new Date(rotS);
                     while (temp < curr) {
                         let dD = Math.round((temp - ref) / 86400000);
                         let pC = ((dD + 6) % 15 + 15) % 15;
@@ -123,7 +127,7 @@
                     }
                     let tIdx = (state.turnoIndex + Math.floor(wDays / 2)) % turniDB.length;
                     let t = turniDB[tIdx];
-                    evs.push({ title: t.s, start: dStr, className: t.s.includes('Disp') ? 'bg-disp' : 'bg-turno' });
+                    evs.push({ title: t.s, start: dStr, className: (t.s === 'Disp' ? 'bg-disp' : 'bg-turno') });
                 }
             }
             if (state.note[dStr]) evs.push({ title: state.note[dStr], start: dStr, display: 'list-item', color: 'red' });
@@ -134,20 +138,20 @@
 
     function apriModal(date) {
         selectedDate = date;
-        document.getElementById('modalDate').textContent = "Giorno: " + date;
+        document.getElementById('modalDate').innerText = date;
         document.getElementById('notaArea').value = state.note[date] || "";
         document.getElementById('modal').style.display = 'block';
     }
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
     function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; salva(); }
     function avviaRotazione() {
-        if (!state.riposoStart) return alert("Imposta prima il riposo!");
+        if(!state.riposoStart) return alert("Imposta il riposo prima!");
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelect').value);
         salva();
     }
     function salvaNota() { state.note[selectedDate] = document.getElementById('notaArea').value; salva(); }
-    function resetTotale() { if (confirm("Cancellare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Resettare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
 </script>
 </body>
