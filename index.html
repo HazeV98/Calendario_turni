@@ -33,7 +33,7 @@
         .bg-turno { background-color: var(--turno) !important; }
         .bg-modificato { background-color: #f5365c !important; }
 
-        #modal, #welcomeModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        #modal, #welcomeModal, #depotModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 10% auto; padding: 25px; width: 90%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
         select { width: 100%; margin: 10px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: #fff; }
@@ -48,15 +48,28 @@
 <div id="topBar">
     <div>
         <h2 style="margin:0; font-size: 18px;">Gestione Turni</h2>
-        <span id="activeDepotLabel" class="deposito-tag">Seleziona Divisione</span>
+        <span id="activeDepotLabel" class="deposito-tag">In attesa...</span>
     </div>
     <button class="btn btn-reset" onclick="resetTotale()">RESET</button>
 </div>
 
 <div id="welcomeModal">
+    <div class="modal-content" style="margin-top: 20%;">
+        <h3 style="color: var(--turno); margin-top: 0;">Benvenuto!</h3>
+        <p style="font-size: 14px; line-height: 1.5;">Configuriamo il tuo calendario in 3 passi:</p>
+        <ul style="font-size: 14px; padding-left: 20px;">
+            <li>Scegli la tua divisione.</li>
+            <li>Seleziona il tuo 1° riposo singolo.</li>
+            <li>Seleziona il turno del giorno dopo.</li>
+        </ul>
+        <button class="btn" style="background: var(--turno)" onclick="vaiAStep2()">Ho capito, iniziamo</button>
+    </div>
+</div>
+
+<div id="depotModal">
     <div class="modal-content">
-        <h3 style="color: var(--turno); margin-top: 0;">Benvenuto</h3>
-        <p style="font-size: 14px;">Seleziona la tua <strong>Divisione</strong>:</p>
+        <h3 style="margin-top: 0;">Divisione</h3>
+        <p style="font-size: 14px;">In quale deposito lavori?</p>
         <select id="depotSelectMain">
             <option value="rot_fnove">Rotazione F.Nove</option>
             <option value="spez_fnove">Spezzati F.Nove</option>
@@ -67,8 +80,7 @@
             <option value="rot_lido">Rotazione Lido</option>
             <option value="spez_lido">Spezzati Lido</option>
         </select>
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-        <button class="btn" style="background: var(--turno)" onclick="confermaDeposito()">Conferma e Inizia</button>
+        <button class="btn" style="background: var(--riposo)" onclick="confermaDeposito()">Conferma Scelta</button>
     </div>
 </div>
 
@@ -79,18 +91,18 @@
         <h3 id="modalDate" style="margin-top:0;">Data</h3>
         
         <div id="singleEditSection">
-            <span class="section-label">Cambio Giorno (Tutte le divisioni)</span>
+            <span class="section-label">Modifica Giorno Singolo</span>
             <select id="singleTurnoSelect"></select>
             <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
             <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
         </div>
 
         <div id="rotationSection">
-            <span class="section-label">Setup Rotazione</span>
-            <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">È il mio 1° Riposo</button>
+            <span class="section-label">Configurazione</span>
+            <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Segna come 1° Riposo</button>
             <span class="section-label" style="margin-top:20px">Turno del giorno dopo</span>
             <select id="turnoSelectRotation"></select>
-            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Attiva Calendario</button>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Attiva Rotazione</button>
         </div>
         
         <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
@@ -99,27 +111,17 @@
 
 <script>
     const depositi = {
-        rot_fnove: [
-            "disp","4p05","4p29","4p07","disp","4p18","4p09","4p04",
-            "4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16",
-            "4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11",
-            "4p14","disp","4p17","disp","4p37","4p35","4p03","4p23",
-            "4p22","4p31","4p02","4p13","disp","4p36","4p38","disp",
-            "m204","4p12","m205","4p26","4p20"
-        ],
-        spez_fnove: ["ESEMPIO SPEZ F.NOVE"],
-        rot_proma: ["ESEMPIO ROT P.ROMA"],
-        spez_proma: ["ESEMPIO SPEZ P.ROMA"],
-        rot_szaccaria: ["ESEMPIO ROT S.ZACCARIA"],
-        spez_szaccaria: ["ESEMPIO SPEZ S.ZACCARIA"],
-        rot_lido: ["ESEMPIO ROT LIDO"],
-        spez_lido: ["ESEMPIO SPEZ LIDO"]
+        rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
+        spez_fnove: ["SPEZ F.NOVE ESEMPIO"],
+        rot_proma: ["ROT P.ROMA ESEMPIO"],
+        spez_proma: ["SPEZ P.ROMA ESEMPIO"],
+        rot_szaccaria: ["ROT S.ZACCARIA ESEMPIO"],
+        spez_szaccaria: ["SPEZ S.ZACCARIA ESEMPIO"],
+        rot_lido: ["ROT LIDO ESEMPIO"],
+        spez_lido: ["SPEZ LIDO ESEMPIO"]
     };
 
-    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { 
-        depositoAttivo: null, riposoStart: null, rotazioneStart: null, turnoIndex: 0, variazioni: {} 
-    };
-    
+    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { depositoAttivo: null, riposoStart: null, rotazioneStart: null, turnoIndex: 0, variazioni: {} };
     let selectedDate = null;
     let calendar;
 
@@ -132,30 +134,39 @@
         }
     });
 
+    function vaiAStep2() {
+        document.getElementById('welcomeModal').style.display = 'none';
+        document.getElementById('depotModal').style.display = 'block';
+    }
+
     function confermaDeposito() {
         state.depositoAttivo = document.getElementById('depotSelectMain').value;
-        document.getElementById('welcomeModal').style.display = 'none';
+        document.getElementById('depotModal').style.display = 'none';
         aggiornaUIEData();
         inizializzaCalendario();
         salvaSenzaReload();
     }
 
     function aggiornaUIEData() {
-        const label = document.getElementById('depotSelectMain').options[document.getElementById('depotSelectMain').selectedIndex || 0].text;
+        const sel = document.getElementById('depotSelectMain');
+        const label = [...sel.options].find(o => o.value === state.depositoAttivo)?.text || "Divisione";
         document.getElementById('activeDepotLabel').innerText = label;
         popolaTendineSetup(state.depositoAttivo);
         popolaTendineCambioUniversale();
     }
 
     function popolaTendineSetup(depKey) {
-        const turniList = depositi[depKey];
         const sRotation = document.getElementById('turnoSelectRotation');
         sRotation.innerHTML = "";
         
-        turniList.forEach((nome, index) => {
-            if(nome.toUpperCase() !== "DISP") {
-                let opt = document.createElement('option'); opt.value = index; opt.textContent = nome.toUpperCase(); sRotation.appendChild(opt);
-            }
+        // Ordine numerico/alfabetico
+        const ordinati = depositi[depKey]
+            .map((n, i) => ({ n: n.toUpperCase(), i: i }))
+            .filter(x => x.n !== "DISP")
+            .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}));
+
+        ordinati.forEach(item => {
+            let opt = document.createElement('option'); opt.value = item.i; opt.textContent = item.n; sRotation.appendChild(opt);
         });
     }
 
@@ -166,30 +177,26 @@
         let optD = document.createElement('option'); optD.value = "DISPONIBILE"; optD.textContent = "DISPONIBILE"; sSingle.appendChild(optD);
         let optR = document.createElement('option'); optR.value = "RIPOSO"; optR.textContent = "RIPOSO"; sSingle.appendChild(optR);
 
-        let tuttiITurni = [];
-        for (let dep in depositi) {
-            depositi[dep].forEach(t => {
-                if(t.toUpperCase() !== "DISP") tuttiITurni.push(t.toUpperCase());
-            });
+        let tutti = [];
+        for (let d in depositi) {
+            depositi[d].forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); });
         }
         
-        let univoci = [...new Set(tuttiITurni)].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-        univoci.forEach(turno => {
-            let opt = document.createElement('option'); opt.value = turno; opt.textContent = turno; sSingle.appendChild(opt);
+        let univoci = [...new Set(tutti)].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+        univoci.forEach(t => {
+            let opt = document.createElement('option'); opt.value = t; opt.textContent = t; sSingle.appendChild(opt);
         });
     }
 
     function inizializzaCalendario() {
         const calendarEl = document.getElementById('calendar');
+        if(calendar) calendar.destroy();
         calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            locale: 'it',
-            firstDay: 1,
-            height: 'auto',
+            initialView: 'dayGridMonth', locale: 'it', firstDay: 1, height: 'auto',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
-            dateClick: function(info) { apriModal(info.dateStr); },
-            eventClick: function(info) { apriModal(info.event.startStr); },
-            events: function(info, successCallback) { successCallback(calcolaCalendario()); }
+            dateClick: (info) => apriModal(info.dateStr),
+            eventClick: (info) => apriModal(info.event.startStr),
+            events: (info, success) => success(calcolaCalendario())
         });
         calendar.render();
 
@@ -207,21 +214,17 @@
         let evs = [];
         let turniAttuali = depositi[state.depositoAttivo];
         let refNum = stringToNumber(state.riposoStart);
-        
         for (let i = -60; i < 400; i++) {
             let currentNum = refNum + i;
             let dStr = new Date(currentNum * 86400000).toISOString().split('T')[0];
-
             if (state.variazioni && state.variazioni[dStr] !== undefined) {
                 let v = state.variazioni[dStr];
                 let title = (typeof v === 'number') ? turniAttuali[v].toUpperCase() : v;
                 evs.push({ title: title, start: dStr, className: title === "RIPOSO" ? 'bg-riposo' : (title === "DISPONIBILE" ? 'bg-disp' : 'bg-modificato'), allDay: true });
                 continue;
             }
-
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
-
             if (isR) {
                 evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
             } else if (state.rotazioneStart) {
@@ -256,10 +259,7 @@
     }
     
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
-    function salvaCambioSingolo() {
-        state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value;
-        salva();
-    }
+    function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salva(); }
     function resetGiornoSingolo() { if (state.variazioni) delete state.variazioni[selectedDate]; salva(); }
     function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; state.variazioni = {}; salva(); }
     function avviaRotazione() {
@@ -267,7 +267,7 @@
         state.turnoIndex = parseInt(document.getElementById('turnoSelectRotation').value);
         salva();
     }
-    function resetTotale() { if(confirm("Cancellare tutto e cambiare divisione?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Resettare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
     function salvaSenzaReload() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
 </script>
