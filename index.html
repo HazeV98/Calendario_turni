@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Turni Ferrovia</title>
+    <title>Calendario Turni</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         :root { 
@@ -23,31 +23,39 @@
         }
 
         #topBar { 
-            padding: 20px; 
+            padding: 15px 20px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             background: white; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 10px;
+        }
+
+        /* Banner Messaggio Iniziale */
+        #welcomeBanner {
+            background: #e7f0ff;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 12px;
+            border-left: 5px solid var(--turno);
+            font-size: 14px;
+            display: none;
         }
 
         #calendar { 
             background: white; 
             padding: 10px; 
             border-radius: 12px;
-            margin: 0 10px;
+            margin: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        /* Altezza celle calendario */
-        .fc .fc-daygrid-day-frame { min-height: 90px !important; }
+        .fc .fc-daygrid-day-frame { min-height: 85px !important; }
         .fc-event { border: none !important; padding: 4px 6px !important; border-radius: 4px !important; font-weight: 600 !important; font-size: 0.85em !important; }
         .bg-riposo { background-color: var(--riposo) !important; }
         .bg-disp { background-color: var(--disp) !important; }
         .bg-turno { background-color: var(--turno) !important; }
 
-        /* Modal Layout */
         #modal { 
             display: none; 
             position: fixed; 
@@ -59,17 +67,14 @@
         
         .modal-content { 
             background: white; 
-            margin: 10% auto; 
+            margin: 15% auto; 
             padding: 25px; 
             width: 85%; 
-            max-width: 420px; 
+            max-width: 400px; 
             border-radius: 20px; 
             box-sizing: border-box;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
-        h3 { color: var(--text); margin-bottom: 20px; }
-        
         select { 
             width: 100%; 
             margin: 15px 0; 
@@ -77,7 +82,6 @@
             border: 2px solid #e9ecef; 
             border-radius: 12px; 
             font-size: 16px; 
-            background: #f8f9fa;
         }
 
         .btn { 
@@ -89,40 +93,37 @@
             width: 100%; 
             margin-top: 10px; 
             font-weight: bold; 
-            font-size: 15px;
-            transition: opacity 0.2s;
         }
         
-        .btn:active { opacity: 0.8; }
         .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 12px; border-radius: 8px; }
-        
-        label { color: #8898aa; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-
     </style>
 </head>
 <body>
 
 <div id="topBar">
-    <h2 style="margin:0; font-size: 20px; letter-spacing: -0.5px;">I Miei Turni</h2>
+    <h2 style="margin:0; font-size: 20px;">Calendario Turni</h2>
     <button class="btn btn-reset" onclick="resetTotale()">RESET</button>
+</div>
+
+<div id="welcomeBanner">
+    <strong>Benvenuto!</strong> Per iniziare, clicca su un giorno nel calendario per impostare il tuo primo riposo e la sequenza dei turni.
 </div>
 
 <div id="calendar"></div>
 
 <div id="modal">
     <div class="modal-content">
-        <h3 id="modalDate">Seleziona Azione</h3>
+        <h3 id="modalDate" style="margin-top:0">Data</h3>
+        <label style="font-size:12px; color:#8898aa">FASE 1</label>
+        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo</button>
         
-        <label>Configurazione Iniziale</label>
-        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta 1° Riposo Singolo</button>
-        
-        <div style="margin-top: 25px; border-top: 2px solid #f4f5f7; padding-top: 20px;">
-            <label>Rotazione Turni</label>
+        <div style="margin-top: 20px; border-top: 2px solid #f4f5f7; padding-top: 15px;">
+            <label style="font-size:12px; color:#8898aa">FASE 2</label>
             <select id="turnoSelect"></select>
-            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Turno (2gg)</button>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Rotazione (2gg)</button>
         </div>
         
-        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 20px;" onclick="chiudiModal()">Annulla</button>
+        <button class="btn" style="background: #eee; color: #333; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
     </div>
 </div>
 
@@ -137,14 +138,13 @@
     ];
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0 };
-    let selectedDate = null;
-
-    function stringToNumber(dateStr) {
-        let p = dateStr.split('-');
-        return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000);
-    }
-
+    
     document.addEventListener('DOMContentLoaded', function() {
+        // Mostra banner se non c'è configurazione
+        if(!state.riposoStart) {
+            document.getElementById('welcomeBanner').style.display = 'block';
+        }
+
         const select = document.getElementById('turnoSelect');
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
@@ -157,7 +157,6 @@
             initialView: 'dayGridMonth',
             locale: 'it',
             firstDay: 1,
-            height: 'auto',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: function(info) { apriModal(info.dateStr); },
             events: function(info, successCallback) { successCallback(calcolaCalendario()); }
@@ -173,7 +172,7 @@
         for (let i = -60; i < 400; i++) {
             let currentNum = refNum + i;
             let d = new Date(currentNum * 86400000);
-            let dStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+            let dStr = d.toISOString().split('T')[0];
 
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
@@ -198,20 +197,33 @@
         return evs;
     }
 
+    function stringToNumber(dateStr) {
+        let p = dateStr.split('-');
+        return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000);
+    }
+
     function apriModal(date) {
         selectedDate = date;
-        const d = new Date(date);
-        document.getElementById('modalDate').innerText = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+        document.getElementById('modalDate').innerText = date;
         document.getElementById('modal').style.display = 'block';
     }
+    
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
-    function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; salva(); }
+    
+    function setRiposoSingolo() { 
+        state.riposoStart = selectedDate; 
+        state.rotazioneStart = null; 
+        document.getElementById('welcomeBanner').style.display = 'none';
+        salva(); 
+    }
+    
     function avviaRotazione() {
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelect').value);
         salva();
     }
-    function resetTotale() { if(confirm("Cancellare tutti i dati e ricominciare?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    
+    function resetTotale() { if(confirm("Resettare?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
 </script>
 </body>
