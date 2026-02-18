@@ -81,7 +81,7 @@
         <div id="stepActionArea"></div>
         <div id="stepButtons">
             <button id="btnConfirmDate" class="btn" style="background: var(--riposo); display:none;" onclick="procediAlTurno()">Sì, conferma data</button>
-            <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Annulla</button>
+            <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Ok</button>
         </div>
     </div>
 </div>
@@ -154,7 +154,7 @@
             document.getElementById('stepDateDisplay').innerText = formattaData(date);
             document.getElementById('stepDesc').innerText = "Hai selezionato questa data. Confermi che è un riposo singolo?";
             document.getElementById('btnConfirmDate').style.display = "block";
-            document.getElementById('stepModal').style.display = 'block';
+            document.getElementById('stepModal').style.display = 'blollack';
         } else if (state.setupStep === 2) {
             // Se siamo nello step 2 ma clicca fuori, ignoriamo o riapriamo
             procediAlTurno();
@@ -276,4 +276,5 @@
 </script>
 </body>
 </html>
+
 
