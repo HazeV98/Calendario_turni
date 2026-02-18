@@ -12,14 +12,17 @@
         #topBar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         #calendar { background: white; padding: 5px; border-radius: 15px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
-        .fc-event { border: none !important; padding: 5px !important; border-radius: 6px !important; font-weight: bold; text-align: center; font-size: 0.85em; }
+        .fc-event { border: none !important; padding: 5px !important; border-radius: 6px !important; font-weight: bold; text-align: center; font-size: 0.85em; cursor: pointer; }
         .bg-riposo { background-color: var(--riposo) !important; }
         .bg-disp { background-color: var(--disp) !important; }
         .bg-turno { background-color: var(--turno) !important; }
         .bg-modificato { background-color: #f5365c !important; }
+        
+        /* Evidenzia giorno oggi */
+        .fc-day-today { background: #edf2ff !important; border: 2px solid var(--turno) !important; }
 
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 380px; border-radius: 20px; text-align: center; }
+        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 380px; border-radius: 20px; text-align: center; max-height: 80vh; overflow-y: auto; }
         
         .info-box { background: #f0f3ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; text-align: left; border-left: 5px solid var(--turno); }
         select { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; background: white; }
@@ -28,7 +31,7 @@
         .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 11px; margin: 0; }
         
         .turno-info { margin: 15px 0; padding: 10px; border-radius: 8px; background: #f8f9fe; border: 1px solid #eee; }
-        .label-small { font-size: 11px; color: #8898aa; text-transform: uppercase; font-weight: bold; }
+        .label-small { font-size: 11px; color: #8898aa; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -36,17 +39,17 @@
 <div id="topBar">
     <div>
         <h2 style="margin:0; font-size: 16px;">I Miei Turni</h2>
-        <span id="activeRotLabel" style="font-size: 12px; color: var(--turno); font-weight: bold;">Inizializzazione...</span>
+        <span id="activeRotLabel" style="font-size: 12px; color: var(--turno); font-weight: bold;">Caricamento...</span>
     </div>
     <button class="btn btn-reset" onclick="resetTotale()">RESET APP</button>
 </div>
 
-<div id="stepWelcome" class="modal" style="display:block;">
+<div id="stepWelcome" class="modal">
     <div class="modal-content">
         <h3 style="color: var(--turno)">Benvenuto</h3>
         <div class="info-box">
             Configuriamo il tuo calendario in pochi secondi.<br><br>
-            Tieni sottomano la tua <b>rotazione</b> e la data del tuo ultimo <b>riposo singolo</b>.
+            Segui i passaggi guidati.
         </div>
         <button class="btn" style="background: var(--turno)" onclick="prossimoStep('stepWelcome', 'stepRotation')">Inizia</button>
     </div>
@@ -92,9 +95,9 @@
 <div id="stepTurnoDopo" class="modal">
     <div class="modal-content">
         <h3 id="nextDayTitle">Turno Giorno Dopo</h3>
-        <p style="font-size: 14px; color: #666;">Seleziona il turno che hai il giorno successivo al riposo selezionato:</p>
+        <p style="font-size: 14px; color: #666;">Seleziona il turno previsto per il giorno dopo il riposo:</p>
         <select id="turnoDopoSelect"></select>
-        <button class="btn" style="background: var(--turno)" onclick="avviaCalendarioFinale()">Salva e Mostra Calendario</button>
+        <button class="btn" style="background: var(--turno)" onclick="avviaCalendarioFinale()">Salva e Fine</button>
     </div>
 </div>
 
@@ -109,9 +112,9 @@
             <span class="label-small" style="color:#f5365c">Turno Attuale (Cambiato)</span>
             <div id="currTurnoText" style="font-size: 20px; font-weight: bold; color:#f5365c;">-</div>
         </div>
-        <span class="label-small">Inserisci Cambio</span>
+        <span class="label-small">Modifica Turno</span>
         <select id="editTurnoSelect"></select>
-        <button class="btn" style="background: var(--text)" onclick="salvaCambio()">Salva Modifica</button>
+        <button class="btn" style="background: var(--text)" onclick="salvaCambio()">Salva Cambio</button>
         <button class="btn btn-grey" onclick="resetSingolo()">Ripristina Originale</button>
         <button class="btn btn-grey" style="margin-top:20px" onclick="chiudiModali()">Chiudi</button>
     </div>
@@ -130,8 +133,13 @@
     let calendar;
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (!state.rot) document.getElementById('stepWelcome').style.display = 'block';
-        else if (!state.ripSingDate) document.getElementById('stepRiposoInfo').style.display = 'block';
+        // Gestione apertura guidata
+        if (!state.rot) {
+            document.getElementById('stepWelcome').style.display = 'block';
+        } else if (!state.startRotDate) {
+            document.getElementById('stepRiposoInfo').style.display = 'block';
+        }
+        
         aggiornaEtichette();
         inizializzaCalendario();
     });
@@ -147,15 +155,17 @@
 
     function confermaRotazione() {
         state.rot = document.getElementById('rotSelect').value;
-        salva();
+        salvaState();
         aggiornaEtichette();
         prossimoStep('stepRotation', 'stepRiposoInfo');
     }
 
     function aggiornaEtichette() {
         const sel = document.getElementById('rotSelect');
-        document.getElementById('activeRotLabel').innerText = [...sel.options].find(o => o.value === state.rot)?.text || "Configurazione";
+        const activeText = [...sel.options].find(o => o.value === state.rot)?.text || "Non Configurato";
+        document.getElementById('activeRotLabel').innerText = activeText;
         
+        // Popola select turno iniziale
         const s = document.getElementById('turnoDopoSelect');
         s.innerHTML = "";
         const lista = (depositi[state.rot] || []).map((t, i) => ({t: t.toUpperCase(), i: i}))
@@ -165,6 +175,7 @@
             let o = document.createElement('option'); o.value = item.i; o.textContent = item.t; s.appendChild(o);
         });
 
+        // Popola select modifiche
         const se = document.getElementById('editTurnoSelect');
         se.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
         let univoci = [];
@@ -187,31 +198,35 @@
 
     function gestisciClickData(date) {
         selectedDate = date;
-        if (!state.rot) document.getElementById('stepRotation').style.display = 'block';
-        else if (!state.ripSingDate) {
-            document.getElementById('dateToConfirm').innerText = formattaData(date);
-            document.getElementById('stepConfirmRiposo').style.display = 'block';
-        } else if (state.startRotDate) {
+        // Se la rotazione non è finita, il click serve alla configurazione
+        if (!state.startRotDate) {
+            if (state.rot && !state.ripSingDate) {
+                document.getElementById('dateToConfirm').innerText = formattaData(date);
+                document.getElementById('stepConfirmRiposo').style.display = 'block';
+            }
+        } else {
+            // Se configurazione è OK, il click apre il dettaglio
             apriDettaglio(date);
         }
     }
 
     function confermaGiornoRiposo() {
         state.ripSingDate = selectedDate;
-        salva();
-        // Calcola automaticamente il giorno dopo per il titolo del pop-up successivo
         let d = new Date(selectedDate);
         d.setDate(d.getDate() + 1);
         let giornoDopoStr = d.toISOString().split('T')[0];
-        state.startRotDate = giornoDopoStr; // Impostiamo già la data di inizio rotazione
-        
+        // Non salviamo ancora startRotDate per non bloccare il flusso
         document.getElementById('nextDayTitle').innerText = "Turno del " + formattaData(giornoDopoStr);
         prossimoStep('stepConfirmRiposo', 'stepTurnoDopo');
     }
 
     function avviaCalendarioFinale() {
+        // Ora la configurazione è davvero completa
+        let d = new Date(state.ripSingDate);
+        d.setDate(d.getDate() + 1);
+        state.startRotDate = d.toISOString().split('T')[0];
         state.turnoIdx = parseInt(document.getElementById('turnoDopoSelect').value);
-        salva();
+        salvaState();
         chiudiModali();
         calendar.refetchEvents();
     }
@@ -220,7 +235,7 @@
         if (!state.ripSingDate) return [];
         let evs = [];
         const turni = depositi[state.rot] || [];
-        const refRip = Math.floor(new Date(state.ripRipDate || state.ripSingDate).getTime() / 86400000);
+        const refRip = Math.floor(new Date(state.ripSingDate).getTime() / 86400000);
         
         for (let i = -100; i < 500; i++) {
             let curSec = (refRip + i) * 86400000;
@@ -247,7 +262,7 @@
             let cName = tFinal === 'RIPOSO' ? 'bg-riposo' : (tFinal === 'DISP' ? 'bg-disp' : 'bg-turno');
             let displayTitle = tFinal;
 
-            if (state.variazioni[dStr]) {
+            if (state.variazioni && state.variazioni[dStr]) {
                 displayTitle = state.variazioni[dStr];
                 cName = 'bg-modificato';
             }
@@ -273,13 +288,14 @@
     }
 
     function salvaCambio() {
+        if(!state.variazioni) state.variazioni = {};
         state.variazioni[selectedDate] = document.getElementById('editTurnoSelect').value;
-        salva(); chiudiModali(); calendar.refetchEvents();
+        salvaState(); chiudiModali(); calendar.refetchEvents();
     }
 
     function resetSingolo() {
-        delete state.variazioni[selectedDate];
-        salva(); chiudiModali(); calendar.refetchEvents();
+        if(state.variazioni) delete state.variazioni[selectedDate];
+        salvaState(); chiudiModali(); calendar.refetchEvents();
     }
 
     function formattaData(iso) {
@@ -287,7 +303,7 @@
         return `${d[2]}/${d[1]}/${d[0]}`;
     }
 
-    function salva() { localStorage.setItem('appTurniState', JSON.stringify(state)); }
+    function salvaState() { localStorage.setItem('appTurniState', JSON.stringify(state)); }
     function resetTotale() { if(confirm("Vuoi cancellare tutto?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
