@@ -82,9 +82,9 @@
 </div>
 
 <div id="welcomeBanner">
-    <strong>Istruzioni per il setup:</strong><br>
-    1. Clicca sul giorno del tuo <strong>riposo singolo</strong> (es. il 19) e premi il tasto verde.<br>
-    2. Clicca sul <strong>giorno successivo al riposo</strong> (es. il 20), seleziona il turno che devi fare e premi il tasto blu per avviare la rotazione automatica.
+    <strong>Configurazione veloce:</strong><br>
+    1. Clicca sul giorno del <strong>riposo singolo</strong> e premi il tasto verde.<br>
+    2. Clicca sul <strong>giorno dopo</strong>, seleziona il turno e premi il tasto blu.
 </div>
 
 <div id="calendar"></div>
@@ -94,16 +94,17 @@
         <h3 id="modalDate" style="margin-top:0; color:var(--text)">Data</h3>
         
         <div id="singleEditSection">
-            <span class="section-label">Modifica questo singolo giorno</span>
+            <span class="section-label">Cambia solo oggi</span>
             <select id="singleTurnoSelect"></select>
-            <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
-            <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
+            <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Conferma Cambio</button>
+            <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Turno Originale</button>
         </div>
 
         <div id="rotationSection" style="margin-top: 20px; border-top: 2px solid #f4f5f7; padding-top: 15px;">
-            <span class="section-label">Configurazione Iniziale</span>
-            <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo</button>
-            <span class="section-label" style="margin-top:10px">Turno del giorno dopo il riposo:</span>
+            <span class="section-label">1. Imposta Riposo</span>
+            <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">È il mio 1° Riposo</button>
+            
+            <span class="section-label" style="margin-top:20px">2. Avvia i Turni (Giorno Dopo)</span>
             <select id="turnoSelectRotation"></select>
             <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Avvia Rotazione Automatica</button>
         </div>
@@ -113,7 +114,6 @@
 </div>
 
 <script>
-    // La tua sequenza reale di rotazione
     const turniDB = [
         "disp","4p05","4p29","4p07","disp","4p18","4p09","4p04",
         "4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16",
@@ -123,7 +123,7 @@
         "m204","4p12","m205","4p26","4p20"
     ];
 
-    // Creiamo una mappa ordinata per le tendine: [ { nome: "4p01", indexOriginale: 13 }, ... ]
+    // Mappa ordinata
     const turniOrdinati = turniDB
         .map((nome, index) => ({ nome: nome.toUpperCase(), indexOriginale: index }))
         .sort((a, b) => a.nome.localeCompare(b.nome, undefined, {numeric: true, sensitivity: 'base'}));
@@ -135,19 +135,26 @@
     document.addEventListener('DOMContentLoaded', function() {
         if(!state.riposoStart) document.getElementById('welcomeBanner').style.display = 'block';
 
-        const selects = ['singleTurnoSelect', 'turnoSelectRotation'];
-        selects.forEach(id => {
-            const s = document.getElementById(id);
-            if (id === 'singleTurnoSelect') {
-                let optR = document.createElement('option'); optR.value = "RIPOSO"; optR.textContent = "RIPOSO"; s.appendChild(optR);
-            }
-            // Usiamo la lista ordinata per popolare il menu
-            turniOrdinati.forEach(item => {
+        const sSingle = document.getElementById('singleTurnoSelect');
+        const sRotation = document.getElementById('turnoSelectRotation');
+
+        // Popolamento tendina MODIFICA (Tutto incluso)
+        let optR = document.createElement('option'); optR.value = "RIPOSO"; optR.textContent = "RIPOSO"; sSingle.appendChild(optR);
+        turniOrdinati.forEach(item => {
+            let opt = document.createElement('option');
+            opt.value = item.indexOriginale;
+            opt.textContent = item.nome;
+            sSingle.appendChild(opt);
+        });
+
+        // Popolamento tendina ROTAZIONE (Solo turni 4P/M, NO DISP)
+        turniOrdinati.forEach(item => {
+            if (item.nome !== "DISP") {
                 let opt = document.createElement('option');
                 opt.value = item.indexOriginale;
                 opt.textContent = item.nome;
-                s.appendChild(opt);
-            });
+                sRotation.appendChild(opt);
+            }
         });
 
         const calendarEl = document.getElementById('calendar');
@@ -226,7 +233,6 @@
     }
     
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
-    
     function salvaCambioSingolo() {
         if (!state.variazioni) state.variazioni = {};
         let val = document.getElementById('singleTurnoSelect').value;
@@ -235,14 +241,12 @@
     }
     function resetGiornoSingolo() { if (state.variazioni) delete state.variazioni[selectedDate]; salva(); }
     function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; state.variazioni = {}; salva(); }
-    
     function avviaRotazione() {
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelectRotation').value);
         document.getElementById('welcomeBanner').style.display = 'none';
         salva();
     }
-    
     function resetTotale() { if(confirm("Cancellare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
 </script>
