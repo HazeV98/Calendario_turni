@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Turni F. Nove - Finale</title>
+    <title>Turni Ferrovia F. Nove</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         :root { --riposo: #28a745; --disp: #fd7e14; --turno: #007bff; --bg: #f8f9fa; }
@@ -23,7 +23,7 @@
 <body>
 
 <div id="topBar">
-    <h3 style="margin:0; font-size: 18px;">Calendario Turni</h3>
+    <h3 style="margin:0; font-size: 18px;">Gestione Turni</h3>
     <button class="btn btn-reset" onclick="resetTotale()">Reset Totale</button>
 </div>
 
@@ -47,19 +47,19 @@
 </div>
 
 <script>
-    // LISTA 43 RIGHE - ORDINATE SECONDO IL TUO FILE
+    // LISTA CORRETTA - ALLINEATA AL TUO FOGLIO EXCEL (RIGA 25 = 4P11)
     const turniDB = [
-        {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}, {s:"Disp", t:"-"},
-        {s:"4P18", t:"13.43"}, {s:"4P09", t:"08.54"}, {s:"4P04", t:"04.21"}, {s:"4P15", t:"15.03"},
-        {s:"Disp", t:"-"}, {s:"4P21", t:"06.21"}, {s:"4P34", t:"15.01"}, {s:"4P10", t:"10.01"},
-        {s:"4P01", t:"04.57"}, {s:"4P06", t:"13.41"}, {s:"4P16", t:"11.02"}, {s:"4P33", t:"04.27"},
-        {s:"Disp", t:"-"}, {s:"4P03", t:"04.30"}, {s:"4P19", t:"13.51"}, {s:"4P20", t:"05.51"},
-        {s:"4P11", t:"10.04"}, {s:"4P31", t:"18.10"}, {s:"4P02", t:"04.31"}, {s:"4P22", t:"06.45"},
-        {s:"4P11", t:"10.04"}, {s:"4P14", t:"14.54"}, {s:"Disp", t:"-"}, {s:"4P08", t:"12.54"}, // RIGA 25, 26, 27, 28
-        {s:"4P12", t:"10.32"}, {s:"4P25", t:"07.21"}, {s:"4P17", t:"11.21"}, {s:"4P24", t:"07.13"},
-        {s:"Disp", t:"-"}, {s:"4P28", t:"17.51"}, {s:"4P23", t:"07.01"}, {s:"4P26", t:"07.41"},
-        {s:"4P30", t:"18.01"}, {s:"4P27", t:"17.41"}, {s:"4P13", t:"14.41"}, {s:"Disp", t:"-"},
-        {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}
+        {s:"Disp", t:"-"}, {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}, // 1-4
+        {s:"Disp", t:"-"}, {s:"4P18", t:"13.43"}, {s:"4P09", t:"08.54"}, {s:"4P04", t:"04.21"}, // 5-8
+        {s:"4P15", t:"15.03"}, {s:"Disp", t:"-"}, {s:"4P21", t:"06.21"}, {s:"4P34", t:"15.01"}, // 9-12
+        {s:"4P10", t:"10.01"}, {s:"4P01", t:"04.57"}, {s:"4P06", t:"13.41"}, {s:"4P16", t:"11.02"}, // 13-16
+        {s:"4P33", t:"04.27"}, {s:"Disp", t:"-"}, {s:"4P03", t:"04.30"}, {s:"4P19", t:"13.51"}, // 17-20
+        {s:"4P20", t:"05.51"}, {s:"4P11", t:"10.04"}, {s:"4P31", t:"18.10"}, {s:"4P02", t:"04.31"}, // 21-24
+        {s:"4P11", t:"10.04"}, {s:"4P14", t:"14.54"}, {s:"Disp", t:"-"}, {s:"4P08", t:"12.54"}, // 25, 26, 27, 28
+        {s:"4P12", t:"10.32"}, {s:"4P25", t:"07.21"}, {s:"4P17", t:"11.21"}, {s:"4P24", t:"07.13"}, // 29-32
+        {s:"Disp", t:"-"}, {s:"4P28", t:"17.51"}, {s:"4P23", t:"07.01"}, {s:"4P26", t:"07.41"}, // 33-36
+        {s:"4P30", t:"18.01"}, {s:"4P27", t:"17.41"}, {s:"4P13", t:"14.41"}, {s:"Disp", t:"-"}, // 37-40
+        {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}                    // 41-43
     ];
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, note: {} };
@@ -75,7 +75,7 @@
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
             opt.value = i;
-            opt.textContent = "RIGA " + (i+1) + ": " + t.s + " (" + t.t + ")";
+            opt.textContent = "RIGA " + (i+1) + ": " + t.s + (t.t !== '-' ? " (" + t.t + ")" : "");
             select.appendChild(opt);
         });
 
@@ -97,12 +97,11 @@
         let evs = [];
         let refNum = stringToNumber(state.riposoStart);
         
-        for (let i = -100; i < 400; i++) {
+        for (let i = -60; i < 400; i++) {
             let currentNum = refNum + i;
             let d = new Date(currentNum * 86400000);
             let dStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
 
-            // Ciclo 15gg: riposo singolo il giorno 0
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
 
@@ -117,9 +116,7 @@
                         let posJ = ((diffJ + 6) % 15 + 15) % 15;
                         if (!(posJ === 6 || posJ === 13 || posJ === 14)) workingDaysCount++;
                     }
-                    // Cambio turno ogni 2 giorni lavorativi
-                    let offset = Math.floor(workingDaysCount / 2);
-                    let tIdx = (state.turnoIndex + offset) % turniDB.length;
+                    let tIdx = (state.turnoIndex + Math.floor(workingDaysCount / 2)) % turniDB.length;
                     let t = turniDB[tIdx];
                     evs.push({ 
                         title: t.s, 
