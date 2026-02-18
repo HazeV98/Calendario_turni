@@ -23,10 +23,9 @@
             position: sticky; top: 0; z-index: 100;
         }
 
-        #calendar { background: white; padding: 5px; border-radius: 15px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); touch-action: none; }
+        #calendar { background: white; padding: 5px; border-radius: 15px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
         .fc .fc-daygrid-day-frame { min-height: 100px !important; cursor: pointer; }
-        /* Permette il click anche sull'evento (il turno) */
         .fc-event { border: none !important; padding: 8px !important; margin: 2px 0 !important; border-radius: 6px !important; font-weight: 700 !important; font-size: 0.9em !important; text-align: center; cursor: pointer !important; }
 
         .bg-riposo { background-color: var(--riposo) !important; }
@@ -34,14 +33,16 @@
         .bg-turno { background-color: var(--turno) !important; }
         .bg-modificato { background-color: #f5365c !important; }
 
-        #modal, #welcomeModal, #depotModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 10% auto; padding: 25px; width: 90%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        /* Modali */
+        #modal, #welcomeModal, #stepModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
 
-        select { width: 100%; margin: 10px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: #fff; }
+        select { width: 100%; margin: 15px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; }
         .btn { padding: 16px; border: none; border-radius: 14px; color: white; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 15px; }
         .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 12px; }
-        .section-label { font-size: 11px; font-weight: bold; color: #8898aa; text-transform: uppercase; margin-top: 15px; display: block; }
         .deposito-tag { font-size: 10px; background: #eef2ff; color: var(--turno); padding: 4px 8px; border-radius: 5px; font-weight: bold; }
+        
+        .instruction-text { font-size: 15px; line-height: 1.6; color: #525f7f; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -55,21 +56,9 @@
 </div>
 
 <div id="welcomeModal">
-    <div class="modal-content" style="margin-top: 20%;">
-        <h3 style="color: var(--turno); margin-top: 0;">Benvenuto!</h3>
-        <p style="font-size: 14px; line-height: 1.5;">Configuriamo il tuo calendario:</p>
-        <ul style="font-size: 14px; padding-left: 20px;">
-            <li>Scegli la tua rotazione.</li>
-            <li>Seleziona il giorno di un tuo 1° riposo singolo.</li>
-            <li>Seleziona il turno del giorno successivo al riposo.</li>
-        </ul>
-        <button class="btn" style="background: var(--turno)" onclick="vaiAStep2()">Iniziamo</button>
-    </div>
-</div>
-
-<div id="depotModal">
     <div class="modal-content">
-        <h3 style="margin-top: 0;">In quale rotazione lavori?</h3>
+        <h3 style="color: var(--turno); margin-top: 0;">Benvenuto!</h3>
+        <p class="instruction-text">In quale rotazione lavori?</p>
         <select id="depotSelectMain">
             <option value="" disabled selected>Scegli rotazione...</option>
             <option value="rot_fnove">Rotazione F.Nove</option>
@@ -81,45 +70,44 @@
             <option value="rot_lido">Rotazione Lido</option>
             <option value="spez_lido">Spezzati Lido</option>
         </select>
-        <button id="btnConfRot" class="btn" style="background: #adb5bd" onclick="confermaDeposito()" disabled>Conferma Rotazione</button>
+        <button id="btnConfRot" class="btn" style="background: #adb5bd" onclick="confermaRotazione()" disabled>Prosegui</button>
+    </div>
+</div>
+
+<div id="stepModal">
+    <div class="modal-content">
+        <h3 id="stepTitle" style="color: var(--turno); margin-top: 0;">Step 2</h3>
+        <p id="stepDesc" class="instruction-text"></p>
+        <div id="stepActionArea"></div>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Chiudi</button>
+    </div>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <h3 id="modalDate" style="margin-top:0;">Data</h3>
+        <span style="font-size: 11px; font-weight: bold; color: #8898aa; text-transform: uppercase;">Cambia Turno</span>
+        <select id="singleTurnoSelect"></select>
+        <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
+        <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
     </div>
 </div>
 
 <div id="calendar"></div>
 
-<div id="modal">
-    <div class="modal-content">
-        <h3 id="modalDate" style="margin-top:0;">Data</h3>
-        
-        <div id="singleEditSection">
-            <span class="section-label">Modifica Giorno Singolo</span>
-            <select id="singleTurnoSelect"></select>
-            <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
-            <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
-        </div>
-
-        <div id="rotationSection">
-            <span class="section-label">Configurazione</span>
-            <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">È il mio 1° Riposo singolo</button>
-            <span class="section-label" style="margin-top:20px">Turno del giorno dopo</span>
-            <select id="turnoSelectRotation"></select>
-            <button id="btnAvviaRot" class="btn" style="background: #adb5bd" onclick="avviaRotazione()" disabled>Attiva Rotazione</button>
-        </div>
-        
-        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
-    </div>
-</div>
-
 <script>
     const depositi = {
         rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
         spez_fnove: ["4p19", "4p28", "4p30"],
-        rot_proma: ["ROT P.ROMA ESEMPIO"], spez_proma: ["SPEZ P.ROMA ESEMPIO"],
-        rot_szaccaria: ["ROT S.ZACCARIA ESEMPIO"], spez_szaccaria: ["SPEZ S.ZACCARIA ESEMPIO"],
-        rot_lido: ["ROT LIDO ESEMPIO"], spez_lido: ["SPEZ LIDO ESEMPIO"]
+        rot_proma: ["ESEMPIO PROMA"], spez_proma: ["ESEMPIO SPEZ PROMA"],
+        rot_szaccaria: ["ESEMPIO SZACC"], spez_szaccaria: ["ESEMPIO SPEZ SZACC"],
+        rot_lido: ["ESEMPIO LIDO"], spez_lido: ["ESEMPIO SPEZ LIDO"]
     };
 
-    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { depositoAttivo: null, riposoStart: null, rotazioneStart: null, turnoIndex: null, variazioni: {} };
+    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { 
+        depositoAttivo: null, riposoStart: null, rotazioneStart: null, turnoIndex: null, variazioni: {}, setupStep: 0 
+    };
     let selectedDate = null;
     let calendar;
 
@@ -129,50 +117,101 @@
         } else {
             aggiornaUIEData();
             inizializzaCalendario();
+            controllaGuida();
         }
 
-        // Listener per abilitare tasti quando la select cambia
         document.getElementById('depotSelectMain').addEventListener('change', function() {
             document.getElementById('btnConfRot').disabled = false;
-            document.getElementById('btnConfRot').style.background = 'var(--riposo)';
-        });
-        document.getElementById('turnoSelectRotation').addEventListener('change', function() {
-            document.getElementById('btnAvviaRot').disabled = false;
-            document.getElementById('btnAvviaRot').style.background = 'var(--turno)';
+            document.getElementById('btnConfRot').style.background = 'var(--turno)';
         });
     });
 
-    function vaiAStep2() {
-        document.getElementById('welcomeModal').style.display = 'none';
-        document.getElementById('depotModal').style.display = 'block';
-    }
-
-    function confermaDeposito() {
+    function confermaRotazione() {
         state.depositoAttivo = document.getElementById('depotSelectMain').value;
-        document.getElementById('depotModal').style.display = 'none';
+        state.setupStep = 1; // Pronti per selezionare il riposo
+        document.getElementById('welcomeModal').style.display = 'none';
         aggiornaUIEData();
         inizializzaCalendario();
         salvaSenzaReload();
+        controllaGuida();
+    }
+
+    function controllaGuida() {
+        if (state.setupStep === 1) {
+            apriStep("Passo 2", "Clicca sul calendario il giorno di un tuo 1° riposo singolo.");
+        } else if (state.setupStep === 2) {
+            apriStep("Passo 3", "Seleziona il turno del giorno successivo al riposo selezionato:");
+            const area = document.getElementById('stepActionArea');
+            area.innerHTML = `
+                <select id="turnoSelectRotation">
+                    <option value="" disabled selected>Seleziona il turno...</option>
+                    ${getOptionsTurni()}
+                </select>
+            `;
+            document.getElementById('turnoSelectRotation').addEventListener('change', function() {
+                state.turnoIndex = parseInt(this.value);
+                state.rotazioneStart = selectedDate; 
+                state.setupStep = 3; // Fine guida
+                salva();
+            });
+        }
+    }
+
+    function apriStep(titolo, desc) {
+        document.getElementById('stepTitle').innerText = titolo;
+        document.getElementById('stepDesc').innerText = desc;
+        document.getElementById('stepModal').style.display = 'block';
+    }
+
+    function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
+
+    function getOptionsTurni() {
+        const turni = depositi[state.depositoAttivo];
+        return turni.map((n, i) => ({ n: n.toUpperCase(), i: i }))
+            .filter(x => x.n !== "DISP")
+            .sort((a, b) => a.n.compare(b.n, undefined, {numeric: true}))
+            .map(item => `<option value="${item.i}">${item.n}</option>`).join('');
+    }
+
+    // Estensione per sort numerico corretto
+    String.prototype.compare = function(s2, loc, opt) { return this.localeCompare(s2, loc, opt); };
+
+    function inizializzaCalendario() {
+        const calendarEl = document.getElementById('calendar');
+        if(calendar) calendar.destroy();
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth', locale: 'it', firstDay: 1, height: 'auto',
+            headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+            dateClick: (info) => gestisciClick(info.dateStr),
+            eventClick: (info) => gestisciClick(info.event.startStr),
+            events: (info, success) => success(calcolaCalendario())
+        });
+        calendar.render();
+    }
+
+    function gestisciClick(date) {
+        selectedDate = date;
+        if (state.setupStep === 1) {
+            // Selezionato il riposo
+            state.riposoStart = date;
+            state.setupStep = 2;
+            salvaSenzaReload();
+            controllaGuida();
+        } else if (state.setupStep >= 3) {
+            // Modifica normale se la guida è finita
+            apriModal(date);
+        }
+    }
+
+    function apriModal(date) {
+        document.getElementById('modalDate').innerText = date;
+        popolaTendineCambioUniversale();
+        document.getElementById('modal').style.display = 'block';
     }
 
     function aggiornaUIEData() {
-        const sel = document.getElementById('depotSelectMain');
-        const label = [...sel.options].find(o => o.value === state.depositoAttivo)?.text || "Rotazione";
+        const label = document.querySelector(`#depotSelectMain option[value="${state.depositoAttivo}"]`)?.text || "Rotazione";
         document.getElementById('activeDepotLabel').innerText = label;
-        popolaTendineSetup(state.depositoAttivo);
-        popolaTendineCambioUniversale();
-    }
-
-    function popolaTendineSetup(depKey) {
-        const sRotation = document.getElementById('turnoSelectRotation');
-        sRotation.innerHTML = '<option value="" disabled selected>Seleziona il turno...</option>';
-        const ordinati = depositi[depKey]
-            .map((n, i) => ({ n: n.toUpperCase(), i: i }))
-            .filter(x => x.n !== "DISP")
-            .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}));
-        ordinati.forEach(item => {
-            let opt = document.createElement('option'); opt.value = item.i; opt.textContent = item.n; sRotation.appendChild(opt);
-        });
     }
 
     function popolaTendineCambioUniversale() {
@@ -188,22 +227,6 @@
         univoci.forEach(t => {
             let opt = document.createElement('option'); opt.value = t; opt.textContent = t; sSingle.appendChild(opt);
         });
-    }
-
-    function inizializzaCalendario() {
-        const calendarEl = document.getElementById('calendar');
-        if(calendar) calendar.destroy();
-        calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth', locale: 'it', firstDay: 1, height: 'auto',
-            headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
-            dateClick: (info) => apriModal(info.dateStr),
-            eventClick: (info) => { 
-                info.jsEvent.preventDefault(); // Previene comportamenti default del browser
-                apriModal(info.event.startStr); 
-            },
-            events: (info, success) => success(calcolaCalendario())
-        });
-        calendar.render();
     }
 
     function calcolaCalendario() {
@@ -247,23 +270,9 @@
         return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000);
     }
 
-    function apriModal(date) {
-        selectedDate = date;
-        document.getElementById('modalDate').innerText = date;
-        document.getElementById('rotationSection').style.display = state.rotazioneStart ? 'none' : 'block';
-        document.getElementById('singleEditSection').style.display = state.rotazioneStart ? 'block' : 'none';
-        document.getElementById('modal').style.display = 'block';
-    }
-    
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salva(); }
     function resetGiornoSingolo() { if (state.variazioni) delete state.variazioni[selectedDate]; salva(); }
-    function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; state.variazioni = {}; salva(); }
-    function avviaRotazione() {
-        state.rotazioneStart = selectedDate;
-        state.turnoIndex = parseInt(document.getElementById('turnoSelectRotation').value);
-        salva();
-    }
     function resetTotale() { if(confirm("Resettare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
     function salvaSenzaReload() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
