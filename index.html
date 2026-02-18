@@ -157,7 +157,6 @@
             document.getElementById('btnCloseStep').innerText = "Cambia data";
             document.getElementById('stepModal').style.display = 'block';
         } else if (state.setupStep === 2) {
-            // Se siamo già nel passo 3, non facciamo nulla cliccando sul calendario
             return;
         } else if (state.setupStep >= 3) {
             document.getElementById('modalDate').innerText = formattaData(date);
@@ -167,11 +166,9 @@
     }
 
     function procediAlTurno() {
-        // Memorizziamo il riposo
         state.riposoStart = selectedDate;
         state.setupStep = 2;
         
-        // Calcoliamo la data del giorno dopo per la rotazione effettiva
         let d = new Date(selectedDate);
         d.setDate(d.getDate() + 1);
         let domaniStr = d.toISOString().split('T')[0];
@@ -180,16 +177,16 @@
         document.getElementById('btnCloseStep').style.display = "none";
         document.getElementById('stepTitle').innerText = "Passo 3";
         
-        // MOSTRA DATA RIPOSO SELEZIONATO (come richiesto)
-        document.getElementById('stepDateDisplay').innerText = "Riposo il: " + formattaData(selectedDate);
-        document.getElementById('stepDesc').innerText = "Ora seleziona il turno del giorno successivo al riposo:";
+        // MODIFICA: MOSTRA DATA DEL GIORNO SUCCESSIVO (LAVORATIVO)
+        document.getElementById('stepDateDisplay').innerText = formattaData(domaniStr);
+        document.getElementById('stepDesc').innerText = "Seleziona il turno per questo giorno:";
         
         const area = document.getElementById('stepActionArea');
         area.innerHTML = `<select id="turnoSelectRotation"><option value="" disabled selected>Seleziona il turno...</option>${getOptionsTurni()}</select>`;
         
         document.getElementById('turnoSelectRotation').onchange = function() {
             state.turnoIndex = parseInt(this.value);
-            state.rotazioneStart = domaniStr; // La rotazione inizia il giorno dopo il riposo
+            state.rotazioneStart = domaniStr; 
             state.setupStep = 3; 
             salvaLocal();
             location.reload();
@@ -203,9 +200,7 @@
         document.getElementById('stepModal').style.display = 'block';
     }
 
-    function chiudiStep() { 
-        document.getElementById('stepModal').style.display = 'none'; 
-    }
+    function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
 
     function getOptionsTurni() {
         const turni = depositi[state.depositoAttivo];
