@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calendario F. Nove</title>
+    <title>Turni Ferrovia F. Nove</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         :root { --riposo: #28a745; --disp: #fd7e14; --turno: #007bff; --bg: #f8f9fa; }
@@ -23,7 +23,7 @@
 <body>
 
 <div id="topBar">
-    <h3 style="margin:0; font-size: 18px;">Turni Ferrovia</h3>
+    <h3 style="margin:0; font-size: 18px;">Gestione Turni Completa</h3>
     <button class="btn btn-reset" onclick="resetTotale()">Reset</button>
 </div>
 
@@ -34,9 +34,9 @@
         <h3 id="modalDate">Data</h3>
         <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo Singolo</button>
         <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
-            <label style="font-size: 13px; font-weight: bold;">Avvia Rotazione qui:</label>
+            <label style="font-size: 13px; font-weight: bold;">Inizia rotazione da qui:</label>
             <select id="turnoSelect"></select>
-            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Rotazione (2gg)</button>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Turno (2gg lavoro)</button>
         </div>
         <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
             <textarea id="notaArea" rows="2" placeholder="Note..."></textarea>
@@ -47,32 +47,27 @@
 </div>
 
 <script>
+    // ELENCO INTEGRALE DEI 43 TURNI DAL FILE CSV
     const turniDB = [
-        {s:"4P05", i:"04.55"}, {s:"4P29", i:"18.04"}, {s:"4P07", i:"12.43"}, {s:"Disp", i:"-"},
-        {s:"4P18", i:"13.43"}, {s:"4P09", i:"08.54"}, {s:"4P04", i:"04.21"}, {s:"4P15", i:"15.03"},
-        {s:"Disp", i:"-"}, {s:"4P21", i:"06.21"}, {s:"4P34", i:"15.01"}, {s:"4P10", i:"10.01"},
-        {s:"4P01", i:"04.57"}, {s:"4P06", i:"13.41"}, {s:"4P16", i:"11.02"}, {s:"4P33", i:"04.27"},
-        {s:"Disp", i:"-"}, {s:"4P03", i:"04.30"}, {s:"4P19", i:"13.51"}, {s:"4P20", i:"05.51"},
-        {s:"4P11", i:"10.04"}, {s:"4P31", i:"18.10"}, {s:"4P02", i:"04.31"}, {s:"4P22", i:"06.45"},
-        {s:"Disp", i:"-"}, {s:"4P32", i:"18.25"}, {s:"4P14", i:"14.54"}, {s:"4P08", i:"12.54"},
-        {s:"4P12", i:"10.32"}, {s:"4P25", i:"07.21"}, {s:"4P17", i:"11.21"}, {s:"4P24", i:"07.13"},
-        {s:"Disp", i:"-"}, {s:"4P28", i:"17.51"}, {s:"4P23", i:"07.01"}, {s:"4P26", i:"07.41"},
-        {s:"4P30", i:"18.01"}, {s:"4P27", i:"17.41"}, {s:"4P13", i:"14.41"}, {s:"Disp", i:"-"},
-        {s:"4P05", i:"04.55"}, {s:"4P29", i:"18.04"}, {s:"4P07", i:"12.43"}
+        {s:"Disp", i:"Disponibile"}, {s:"4P05", i:"04.55"}, {s:"4P29", i:"18.04"}, {s:"4P07", i:"12.43"},
+        {s:"Disp", i:"Disponibile"}, {s:"4P18", i:"13.43"}, {s:"4P09", i:"08.54"}, {s:"4P04", i:"04.21"},
+        {s:"4P15", i:"15.03"}, {s:"Disp", i:"Disponibile"}, {s:"4P21", i:"06.21"}, {s:"4P34", i:"15.01"},
+        {s:"4P10", i:"10.01"}, {s:"4P01", i:"04.57"}, {s:"4P06", i:"13.41"}, {s:"4P16", i:"11.02"},
+        {s:"4P33", i:"04.27"}, {s:"Disp", i:"Disponibile"}, {s:"4P03", i:"04.30"}, {s:"4P19", i:"13.51"},
+        {s:"4P20", i:"05.51"}, {s:"4P11", i:"10.04"}, {s:"4P31", i:"18.10"}, {s:"4P02", i:"04.31"},
+        {s:"4P22", i:"06.45"}, {s:"Disp", i:"Disponibile"}, {s:"4P32", i:"18.25"}, {s:"4P14", i:"14.54"},
+        {s:"4P08", i:"12.54"}, {s:"4P12", i:"10.32"}, {s:"4P25", i:"07.21"}, {s:"4P17", i:"11.21"},
+        {s:"4P24", i:"07.13"}, {s:"Disp", i:"Disponibile"}, {s:"4P28", i:"17.51"}, {s:"4P23", i:"07.01"},
+        {s:"4P26", i:"07.41"}, {s:"4P30", i:"18.01"}, {s:"4P27", i:"17.41"}, {s:"4P13", i:"14.41"},
+        {s:"Disp", i:"Disponibile"}, {s:"4P05", i:"04.55 (Bis)"}, {s:"4P29", i:"18.04 (Bis)"}
     ];
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, note: {} };
     let selectedDate = null;
 
-    // Funzione fondamentale per evitare slittamenti di data
-    function dateToNumber(dateObj) {
-        return Math.floor(dateObj.getTime() / 86400000);
-    }
-
     function stringToNumber(dateStr) {
         let p = dateStr.split('-');
-        let d = new Date(p[0], p[1]-1, p[2], 12, 0, 0); // Ore 12:00 per sicurezza
-        return dateToNumber(d);
+        return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -80,7 +75,7 @@
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
             opt.value = i;
-            opt.textContent = t.s + " (" + t.i + ")";
+            opt.textContent = (i + 1) + ". " + t.s + " (" + t.i + ")";
             select.appendChild(opt);
         });
 
@@ -88,7 +83,6 @@
             initialView: 'dayGridMonth',
             locale: 'it',
             firstDay: 1,
-            timeZone: 'local',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: function(info) { apriModal(info.dateStr); },
             events: function(info, successCallback) {
@@ -96,7 +90,6 @@
             }
         });
         calendar.render();
-        if(!state.riposoStart) setTimeout(function(){ alert("1. Clicca sul giorno del RIPOSO SINGOLO.\n2. Seleziona 'Imposta come 1° Riposo Singolo'."); }, 500);
     });
 
     function calcolaCalendario() {
@@ -104,18 +97,11 @@
         let evs = [];
         let refNum = stringToNumber(state.riposoStart);
         
-        // Calcoliamo un intervallo di 1 anno
-        for (let i = -120; i < 300; i++) {
+        for (let i = -100; i < 400; i++) {
             let currentNum = refNum + i;
             let d = new Date(currentNum * 86400000);
-            
-            // Formattazione manuale stringa YYYY-MM-DD
-            let y = d.getFullYear();
-            let m = String(d.getMonth() + 1).padStart(2, '0');
-            let day = String(d.getDate()).padStart(2, '0');
-            let dStr = y + "-" + m + "-" + day;
+            let dStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
 
-            // Ciclo 15gg: il giorno selezionato (i=0) deve essere Riposo Singolo (pos 6)
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
 
@@ -124,32 +110,37 @@
             } else if (state.rotazioneStart) {
                 let rotNum = stringToNumber(state.rotazioneStart);
                 if (currentNum >= rotNum) {
-                    let wDays = 0;
+                    let workingDaysCount = 0;
                     for (let j = rotNum; j < currentNum; j++) {
                         let diffJ = j - refNum;
                         let posJ = ((diffJ + 6) % 15 + 15) % 15;
-                        if (!(posJ === 6 || posJ === 13 || posJ === 14)) wDays++;
+                        if (!(posJ === 6 || posJ === 13 || posJ === 14)) workingDaysCount++;
                     }
-                    let tIdx = (state.turnoIndex + Math.floor(wDays / 2)) % turniDB.length;
+                    let tIdx = (state.turnoIndex + Math.floor(workingDaysCount / 2)) % turniDB.length;
                     let t = turniDB[tIdx];
-                    evs.push({ title: t.s, start: dStr, className: (t.s === 'Disp' ? 'bg-disp' : 'bg-turno'), allDay: true });
+                    evs.push({ 
+                        title: t.s, 
+                        start: dStr, 
+                        className: (t.s === 'Disp' ? 'bg-disp' : 'bg-turno'), 
+                        allDay: true 
+                    });
                 }
             }
-            if (state.note[dStr]) evs.push({ title: state.note[dStr], start: dStr, display: 'list-item', color: 'red', allDay: true });
+            if (state.note[dStr]) evs.push({ title: "📝 " + state.note[dStr], start: dStr, display: 'list-item', color: 'red', allDay: true });
         }
         return evs;
     }
 
     function apriModal(date) {
         selectedDate = date;
-        document.getElementById('modalDate').innerText = "Giorno selezionato: " + date;
+        document.getElementById('modalDate').innerText = "Data: " + date;
         document.getElementById('notaArea').value = state.note[date] || "";
         document.getElementById('modal').style.display = 'block';
     }
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
     function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; salva(); }
     function avviaRotazione() {
-        if(!state.riposoStart) return alert("Imposta il riposo prima!");
+        if(!state.riposoStart) return alert("Imposta prima il Riposo!");
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelect').value);
         salva();
