@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Turni F. Nove - Versione Corretta</title>
+    <title>Turni F. Nove - Finale</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         :root { --riposo: #28a745; --disp: #fd7e14; --turno: #007bff; --bg: #f8f9fa; }
@@ -23,7 +23,7 @@
 <body>
 
 <div id="topBar">
-    <h3 style="margin:0; font-size: 18px;">Gestione Turni</h3>
+    <h3 style="margin:0; font-size: 18px;">Calendario Turni</h3>
     <button class="btn btn-reset" onclick="resetTotale()">Reset Totale</button>
 </div>
 
@@ -34,7 +34,7 @@
         <h3 id="modalDate">Data</h3>
         <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta 1° Riposo Singolo</button>
         <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
-            <label style="font-size: 13px; font-weight: bold;">Inizia rotazione da questo turno:</label>
+            <label style="font-size: 13px; font-weight: bold;">Inizia rotazione da qui:</label>
             <select id="turnoSelect"></select>
             <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Turno (2gg lavoro)</button>
         </div>
@@ -47,20 +47,19 @@
 </div>
 
 <script>
-    // LISTA INTEGRALE RIGA PER RIGA DAL TUO FILE CSV
-    // La riga 25 è 4P11, la 26 è 4P14, la 27 è Disp.
+    // LISTA 43 RIGHE - ORDINATE SECONDO IL TUO FILE
     const turniDB = [
-        {s:"Disp", i:"Diponibile"}, {s:"4P05", i:"04.55"}, {s:"4P29", i:"18.04"}, {s:"4P07", i:"12.43"}, // 1-4
-        {s:"Disp", i:"Disponibile"}, {s:"4P18", i:"13.43"}, {s:"4P09", i:"08.54"}, {s:"4P04", i:"04.21"}, // 5-8
-        {s:"4P15", i:"15.03"}, {s:"Disp", i:"Disponibile"}, {s:"4P21", i:"06.21"}, {s:"4P34", i:"15.01"}, // 9-12
-        {s:"4P10", i:"10.01"}, {s:"4P01", i:"04.57"}, {s:"4P06", i:"13.41"}, {s:"4P16", i:"11.02"}, // 13-16
-        {s:"4P33", i:"04.27"}, {s:"Disp", i:"Disponibile"}, {s:"4P03", i:"04.30"}, {s:"4P19", i:"13.51"}, // 17-20
-        {s:"4P20", i:"05.51"}, {s:"4P11", i:"10.04"}, {s:"4P31", i:"18.10"}, {s:"4P02", i:"04.31"}, // 21-24
-        {s:"4P22", i:"06.45"}, {s:"4P11", i:"10.04"}, {s:"4P14", i:"14.54"}, {s:"Disp", i:"Disponibile"}, // 25-28 (QUI: 25=4P11, 26=4P14, 27=Disp)
-        {s:"4P08", i:"12.54"}, {s:"4P12", i:"10.32"}, {s:"4P25", i:"07.21"}, {s:"4P17", i:"11.21"}, // 29-32
-        {s:"4P24", i:"07.13"}, {s:"Disp", i:"Disponibile"}, {s:"4P28", i:"17.51"}, {s:"4P23", i:"07.01"}, // 33-36
-        {s:"4P26", i:"07.41"}, {s:"4P30", i:"18.01"}, {s:"4P27", i:"17.41"}, {s:"4P13", i:"14.41"}, // 37-40
-        {s:"Disp", i:"Disponibile"}, {s:"4P05", i:"04.55"}, {s:"4P29", i:"18.04"}                   // 41-43
+        {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}, {s:"Disp", t:"-"},
+        {s:"4P18", t:"13.43"}, {s:"4P09", t:"08.54"}, {s:"4P04", t:"04.21"}, {s:"4P15", t:"15.03"},
+        {s:"Disp", t:"-"}, {s:"4P21", t:"06.21"}, {s:"4P34", t:"15.01"}, {s:"4P10", t:"10.01"},
+        {s:"4P01", t:"04.57"}, {s:"4P06", t:"13.41"}, {s:"4P16", t:"11.02"}, {s:"4P33", t:"04.27"},
+        {s:"Disp", t:"-"}, {s:"4P03", t:"04.30"}, {s:"4P19", t:"13.51"}, {s:"4P20", t:"05.51"},
+        {s:"4P11", t:"10.04"}, {s:"4P31", t:"18.10"}, {s:"4P02", t:"04.31"}, {s:"4P22", t:"06.45"},
+        {s:"4P11", t:"10.04"}, {s:"4P14", t:"14.54"}, {s:"Disp", t:"-"}, {s:"4P08", t:"12.54"}, // RIGA 25, 26, 27, 28
+        {s:"4P12", t:"10.32"}, {s:"4P25", t:"07.21"}, {s:"4P17", t:"11.21"}, {s:"4P24", t:"07.13"},
+        {s:"Disp", t:"-"}, {s:"4P28", t:"17.51"}, {s:"4P23", t:"07.01"}, {s:"4P26", t:"07.41"},
+        {s:"4P30", t:"18.01"}, {s:"4P27", t:"17.41"}, {s:"4P13", t:"14.41"}, {s:"Disp", t:"-"},
+        {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}
     ];
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, note: {} };
@@ -76,8 +75,7 @@
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
             opt.value = i;
-            // Mostriamo il numero di riga per facilitarti la scelta
-            opt.textContent = "Riga " + (i + 1) + ": " + t.s + " (" + t.i + ")";
+            opt.textContent = "RIGA " + (i+1) + ": " + t.s + " (" + t.t + ")";
             select.appendChild(opt);
         });
 
@@ -104,6 +102,7 @@
             let d = new Date(currentNum * 86400000);
             let dStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
 
+            // Ciclo 15gg: riposo singolo il giorno 0
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
 
@@ -118,7 +117,9 @@
                         let posJ = ((diffJ + 6) % 15 + 15) % 15;
                         if (!(posJ === 6 || posJ === 13 || posJ === 14)) workingDaysCount++;
                     }
-                    let tIdx = (state.turnoIndex + Math.floor(workingDaysCount / 2)) % turniDB.length;
+                    // Cambio turno ogni 2 giorni lavorativi
+                    let offset = Math.floor(workingDaysCount / 2);
+                    let tIdx = (state.turnoIndex + offset) % turniDB.length;
                     let t = turniDB[tIdx];
                     evs.push({ 
                         title: t.s, 
