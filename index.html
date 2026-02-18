@@ -19,7 +19,7 @@
             margin: 0; 
             background: var(--bg); 
             color: var(--text);
-            padding-bottom: 30px;
+            padding-bottom: 50px;
         }
 
         #topBar { 
@@ -29,49 +29,68 @@
             align-items: center; 
             background: white; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        /* Banner Messaggio Iniziale */
+        /* Banner aggiornato */
         #welcomeBanner {
-            background: #e7f0ff;
-            padding: 15px;
-            margin: 10px;
-            border-radius: 12px;
-            border-left: 5px solid var(--turno);
-            font-size: 14px;
+            background: #ffffff;
+            padding: 20px;
+            margin: 15px;
+            border-radius: 15px;
+            border-left: 6px solid var(--riposo);
+            font-size: 15px;
+            line-height: 1.5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             display: none;
         }
 
         #calendar { 
             background: white; 
             padding: 10px; 
-            border-radius: 12px;
+            border-radius: 15px;
             margin: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        .fc .fc-daygrid-day-frame { min-height: 85px !important; }
-        .fc-event { border: none !important; padding: 4px 6px !important; border-radius: 4px !important; font-weight: 600 !important; font-size: 0.85em !important; }
+        /* Correzione Layout Schiacciato */
+        .fc .fc-daygrid-day-frame { 
+            min-height: 100px !important; /* Celle più alte */
+        }
+        
+        .fc-event { 
+            border: none !important; 
+            padding: 6px !important; 
+            margin: 2px 1px !important;
+            border-radius: 6px !important; 
+            font-weight: 700 !important; 
+            font-size: 0.9em !important;
+            text-align: center;
+        }
+
         .bg-riposo { background-color: var(--riposo) !important; }
         .bg-disp { background-color: var(--disp) !important; }
         .bg-turno { background-color: var(--turno) !important; }
 
+        /* Modal */
         #modal { 
             display: none; 
             position: fixed; 
             z-index: 9999; 
             left: 0; top: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.6); 
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(5px);
         }
         
         .modal-content { 
             background: white; 
-            margin: 15% auto; 
-            padding: 25px; 
-            width: 85%; 
+            margin: 10% auto; 
+            padding: 30px; 
+            width: 90%; 
             max-width: 400px; 
-            border-radius: 20px; 
+            border-radius: 25px; 
             box-sizing: border-box;
         }
 
@@ -81,49 +100,54 @@
             padding: 15px; 
             border: 2px solid #e9ecef; 
             border-radius: 12px; 
-            font-size: 16px; 
+            font-size: 16px;
+            -webkit-appearance: none;
         }
 
         .btn { 
-            padding: 15px; 
+            padding: 16px; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             color: white; 
             cursor: pointer; 
             width: 100%; 
             margin-top: 10px; 
-            font-weight: bold; 
+            font-weight: bold;
+            font-size: 16px;
         }
         
-        .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 12px; border-radius: 8px; }
+        .btn-reset { background: #f5365c; padding: 10px 18px; width: auto; font-size: 13px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div id="topBar">
-    <h2 style="margin:0; font-size: 20px;">Calendario Turni</h2>
+    <h2 style="margin:0; font-size: 22px;">Calendario Turni</h2>
     <button class="btn btn-reset" onclick="resetTotale()">RESET</button>
 </div>
 
 <div id="welcomeBanner">
-    <strong>Benvenuto!</strong> Per iniziare, clicca su un giorno nel calendario per impostare il tuo primo riposo e la sequenza dei turni.
+    <strong>Istruzioni:</strong><br>
+    1. Clicca sul giorno del tuo <strong>riposo singolo</strong> e premi il tasto verde.<br>
+    2. Clicca sul <strong>giorno dopo</strong>, seleziona il turno corretto dalla lista e premi il tasto blu.
 </div>
 
 <div id="calendar"></div>
 
 <div id="modal">
     <div class="modal-content">
-        <h3 id="modalDate" style="margin-top:0">Data</h3>
-        <label style="font-size:12px; color:#8898aa">FASE 1</label>
-        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo</button>
+        <h3 id="modalDate" style="margin-top:0; color:#32325d">Configura Giorno</h3>
         
-        <div style="margin-top: 20px; border-top: 2px solid #f4f5f7; padding-top: 15px;">
-            <label style="font-size:12px; color:#8898aa">FASE 2</label>
+        <p style="font-size: 13px; color: #8898aa; margin-bottom: 5px;">AZIONE 1</p>
+        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta Riposo Singolo</button>
+        
+        <div style="margin-top: 25px; border-top: 2px solid #f4f5f7; padding-top: 20px;">
+            <p style="font-size: 13px; color: #8898aa; margin-bottom: 5px;">AZIONE 2 (Giorno dopo il riposo)</p>
             <select id="turnoSelect"></select>
-            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Rotazione (2gg)</button>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Turno e Rotazione</button>
         </div>
         
-        <button class="btn" style="background: #eee; color: #333; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 20px;" onclick="chiudiModal()">Chiudi</button>
     </div>
 </div>
 
@@ -140,7 +164,6 @@
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0 };
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Mostra banner se non c'è configurazione
         if(!state.riposoStart) {
             document.getElementById('welcomeBanner').style.display = 'block';
         }
@@ -157,6 +180,7 @@
             initialView: 'dayGridMonth',
             locale: 'it',
             firstDay: 1,
+            height: 'auto',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: function(info) { apriModal(info.dateStr); },
             events: function(info, successCallback) { successCallback(calcolaCalendario()); }
@@ -204,7 +228,8 @@
 
     function apriModal(date) {
         selectedDate = date;
-        document.getElementById('modalDate').innerText = date;
+        const d = new Date(date);
+        document.getElementById('modalDate').innerText = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
         document.getElementById('modal').style.display = 'block';
     }
     
@@ -223,7 +248,7 @@
         salva();
     }
     
-    function resetTotale() { if(confirm("Resettare?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Resettare tutti i dati?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
 </script>
 </body>
