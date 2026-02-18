@@ -157,7 +157,8 @@
             document.getElementById('btnCloseStep').innerText = "Cambia data";
             document.getElementById('stepModal').style.display = 'block';
         } else if (state.setupStep === 2) {
-            procediAlTurno();
+            // Se siamo già nel passo 3, non facciamo nulla cliccando sul calendario
+            return;
         } else if (state.setupStep >= 3) {
             document.getElementById('modalDate').innerText = formattaData(date);
             popolaCambioSingolo();
@@ -166,12 +167,21 @@
     }
 
     function procediAlTurno() {
+        // Memorizziamo il riposo
         state.riposoStart = selectedDate;
         state.setupStep = 2;
+        
+        // Calcoliamo la data del giorno dopo per la rotazione effettiva
+        let d = new Date(selectedDate);
+        d.setDate(d.getDate() + 1);
+        let domaniStr = d.toISOString().split('T')[0];
+        
         document.getElementById('btnConfirmDate').style.display = "none";
-        document.getElementById('btnCloseStep').style.display = "none"; // Nascondiamo il tasto seleziona/ok in questa fase
+        document.getElementById('btnCloseStep').style.display = "none";
         document.getElementById('stepTitle').innerText = "Passo 3";
-        document.getElementById('stepDateDisplay').innerText = formattaData(selectedDate);
+        
+        // MOSTRA DATA RIPOSO SELEZIONATO (come richiesto)
+        document.getElementById('stepDateDisplay').innerText = "Riposo il: " + formattaData(selectedDate);
         document.getElementById('stepDesc').innerText = "Ora seleziona il turno del giorno successivo al riposo:";
         
         const area = document.getElementById('stepActionArea');
@@ -179,7 +189,7 @@
         
         document.getElementById('turnoSelectRotation').onchange = function() {
             state.turnoIndex = parseInt(this.value);
-            state.rotazioneStart = selectedDate; 
+            state.rotazioneStart = domaniStr; // La rotazione inizia il giorno dopo il riposo
             state.setupStep = 3; 
             salvaLocal();
             location.reload();
