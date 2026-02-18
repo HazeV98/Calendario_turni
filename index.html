@@ -106,9 +106,12 @@
     const depositi = {
         rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
         spez_fnove: ["4p19", "4p28", "4p30"],
-        rot_proma: ["ESEMPIO ROMA"], spez_proma: ["ESEMPIO SPEZ ROMA"],
-        rot_szaccaria: ["ESEMPIO SZACC"], spez_szaccaria: ["ESEMPIO SPEZ SZACC"],
-        rot_lido: ["ESEMPIO LIDO"], spez_lido: ["ESEMPIO SPEZ LIDO"]
+        rot_proma: ["IN ATTESA DATI"], 
+        spez_proma: ["2C33", "6P03", "2C17", "1C22", "2C40", "6P11"],
+        rot_szaccaria: ["IN ATTESA DATI"], 
+        spez_szaccaria: ["2C13", "2C15", "2C16"],
+        rot_lido: ["IN ATTESA DATI"], 
+        spez_lido: ["5P24", "5P02", "5P08"]
     };
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { 
@@ -187,6 +190,7 @@
             tempTurnoIndex = parseInt(this.value);
             document.getElementById('btnConfirmFinal').style.display = "block";
         };
+        document.getElementById('stepModal').style.display = 'block';
     }
 
     function attivaRotazioneFinale() {
@@ -201,7 +205,6 @@
         const area = document.getElementById('infoTurniArea');
         const dStr = selectedDate;
         
-        // Calcolo turno originale (da rotazione)
         let originale = "N.D.";
         let turni = depositi[state.depositoAttivo];
         let ref = stringToNum(state.riposoStart);
@@ -234,7 +237,7 @@
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
         let tutti = [];
-        for (let d in depositi) { depositi[d].forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }); }
+        for (let d in depositi) { depositi[d].forEach(t => { if(t !== "IN ATTESA DATI" && t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }); }
         [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
             let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
         });
@@ -251,7 +254,7 @@
     function getOptionsTurni() {
         const turni = depositi[state.depositoAttivo];
         return turni.map((n, i) => ({ n: n.toUpperCase(), i: i }))
-            .filter(x => x.n !== "DISP")
+            .filter(x => x.n !== "DISP" && x.n !== "IN ATTESA DATI")
             .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}))
             .map(item => `<option value="${item.i}">${item.n}</option>`).join('');
     }
@@ -282,6 +285,7 @@
         if (!state.riposoStart || !state.depositoAttivo) return [];
         let evs = [];
         let turni = depositi[state.depositoAttivo];
+        if (turni[0] === "IN ATTESA DATI") return [];
         let ref = stringToNum(state.riposoStart);
         for (let i = -60; i < 400; i++) {
             let curr = ref + i;
