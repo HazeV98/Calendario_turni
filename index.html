@@ -1,5 +1,9 @@
+<div id="topBar" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #ddd;">
+    <h3 style="margin:0; font-size: 16px;">Calendario Turni</h3>
+    <button onclick="resetTotale()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Reset Calendario</button>
+</div>
+
 <script>
-    // DATABASE COMPLETO TURNI
     const turniDB = [
         {s: "4P05", i: "P. Roma 04.55", f: "11.43"}, {s: "4P29", i: "F. Nove 18.04", f: "00.16"},
         {s: "4P07", i: "F. Nove 12.43", f: "19.43"}, {s: "Disp", i: "Disponibile", f: ""},
@@ -27,6 +31,7 @@
     let selectedDate = null;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Popola tendina turni
         const select = document.getElementById('turnoSelect');
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
@@ -35,6 +40,7 @@
             select.appendChild(opt);
         });
 
+        // Inizializza Calendario
         const calendarEl = document.getElementById('calendar');
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -45,33 +51,35 @@
             events: calcolaCalendario()
         });
         calendar.render();
+
+        // Controllo primo avvio
+        if (!state.riposoStart) {
+            setTimeout(() => {
+                alert("Benvenuto! Per iniziare:\n1. Clicca sul giorno del tuo primo RIPOSO SINGOLO.\n2. Seleziona 'Imposta come 1° Riposo Singolo'.");
+            }, 500);
+        } else if (!state.rotazioneStart) {
+            setTimeout(() => {
+                alert("Ottimo! Ora clicca su un giorno lavorativo per avviare la rotazione dei turni.");
+            }, 500);
+        }
     });
 
     function calcolaCalendario() {
         if (!state.riposoStart) return [];
         let evs = [];
-        
-        // Data di riferimento (quella che hai cliccato come riposo singolo)
         let refDate = new Date(state.riposoStart);
         refDate.setHours(0,0,0,0);
 
-        // Calcoliamo 6 mesi prima e 6 mesi dopo per coprire il calendario
-        let startDate = new Date(refDate); startDate.setMonth(startDate.getMonth() - 6);
-        let endDate = new Date(refDate); endDate.setMonth(endDate.getMonth() + 6);
-
+        let startDate = new Date(refDate); startDate.setMonth(startDate.getMonth() - 4);
+        let endDate = new Date(refDate); endDate.setMonth(endDate.getMonth() + 8);
         let curr = new Date(startDate);
 
         while(curr <= endDate) {
             let dateStr = curr.toISOString().split('T')[0];
-            
-            // Differenza di giorni tra la data corrente e il riferimento
             let diffDays = Math.round((curr - refDate) / (1000 * 60 * 60 * 24));
             
-            // Logica del ciclo di 15 giorni (6L - 1R - 6L - 2R)
-            // Facciamo in modo che il giorno di riferimento (diffDays = 0) sia la posizione 6 (il riposo singolo)
+            // Ciclo 15gg: 0-5 L, 6 R (singolo), 7-12 L, 13-14 R (doppio)
             let posCiclo = ((diffDays + 6) % 15 + 15) % 15;
-
-            // Riposi: pos 6 (singolo), pos 13 e 14 (doppio)
             let isRiposo = (posCiclo === 6 || posCiclo === 13 || posCiclo === 14);
 
             if (isRiposo) {
@@ -81,7 +89,6 @@
                 rotStart.setHours(0,0,0,0);
                 
                 if (curr >= rotStart) {
-                    // Contiamo quanti GIORNI LAVORATIVI sono passati dall'inizio della rotazione
                     let workingDaysCount = 0;
                     let tempDate = new Date(rotStart);
                     while (tempDate < curr) {
@@ -90,30 +97,27 @@
                         if (!(pCiclo === 6 || pCiclo === 13 || pCiclo === 14)) workingDaysCount++;
                         tempDate.setDate(tempDate.getDate() + 1);
                     }
-                    
-                    // Ogni turno ripetuto 2 volte
                     let turnoIdx = (state.turnoIndex + Math.floor(workingDaysCount / 2)) % turniDB.length;
                     let t = turniDB[turnoIdx];
-                    evs.push({ 
-                        title: t.s + "\n" + t.i + (t.f ? " - " + t.f : ""), 
-                        start: dateStr, 
-                        className: t.s === 'Disp' ? 'bg-disp' : 'bg-turno' 
-                    });
+                    evs.push({ title: t.s, start: dateStr, className: t.s === 'Disp' ? 'bg-disp' : 'bg-turno', extendedProps: { info: t.i + " - " + t.f } });
                 }
             }
-            
-            if (state.note[dateStr]) {
-                evs.push({ title: "📝 " + state.note[dateStr], start: dateStr, display: 'list-item', color: '#333' });
-            }
-
+            if (state.note[dateStr]) evs.push({ title: "📝 " + state.note[dateStr], start: dateStr, display: 'list-item', color: '#333' });
             curr.setDate(curr.getDate() + 1);
         }
         return evs;
     }
 
+    function resetTotale() {
+        if (confirm("Vuoi davvero cancellare tutto il calendario e le note?")) {
+            localStorage.removeItem('myTurniApp');
+            location.reload();
+        }
+    }
+
     function apriModal(date) {
         selectedDate = date;
-        document.getElementById('modalDate').textContent = date;
+        document.getElementById('modalDate').textContent = "Giorno: " + date;
         document.getElementById('notaArea').value = state.note[date] || "";
         document.getElementById('modal').style.display = 'block';
     }
@@ -122,15 +126,12 @@
 
     function setRiposoSingolo() {
         state.riposoStart = selectedDate;
-        state.rotazioneStart = null; // Reset rotazione se cambia il riposo per sicurezza
+        state.rotazioneStart = null; 
         salva();
     }
 
     function avviaRotazione() {
-        if (!state.riposoStart) {
-            alert("Devi prima impostare un giorno di riposo singolo!");
-            return;
-        }
+        if (!state.riposoStart) { alert("Imposta prima il riposo!"); return; }
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelect').value);
         salva();
