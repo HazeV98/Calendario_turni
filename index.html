@@ -81,7 +81,7 @@
         <div id="stepActionArea"></div>
         <div id="stepButtons">
             <button id="btnConfirmDate" class="btn" style="background: var(--riposo); display:none;" onclick="procediAlTurno()">Sì, conferma data</button>
-            <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Ok</button>
+            <button id="btnCloseStep" class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Seleziona</button>
         </div>
     </div>
 </div>
@@ -141,22 +141,22 @@
 
     function checkGuidaIniziale() {
         if (state.setupStep === 1) {
-            mostraStep("Passo 2", "Seleziona sul calendario il giorno di un tuo riposo singolo.");
+            mostraStep("Passo 2", "Seleziona la data di un tuo riposo singolo");
             document.getElementById('stepDateDisplay').innerText = "";
             document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnCloseStep').innerText = "Seleziona";
         }
     }
 
     function gestisciInterazione(date) {
         selectedDate = date;
         if (state.setupStep === 1) {
-            // Conferma data riposo
             document.getElementById('stepDateDisplay').innerText = formattaData(date);
             document.getElementById('stepDesc').innerText = "Hai selezionato questa data. Confermi che è un riposo singolo?";
             document.getElementById('btnConfirmDate').style.display = "block";
-            document.getElementById('stepModal').style.display = 'blollack';
+            document.getElementById('btnCloseStep').innerText = "Cambia data";
+            document.getElementById('stepModal').style.display = 'block';
         } else if (state.setupStep === 2) {
-            // Se siamo nello step 2 ma clicca fuori, ignoriamo o riapriamo
             procediAlTurno();
         } else if (state.setupStep >= 3) {
             document.getElementById('modalDate').innerText = formattaData(date);
@@ -169,6 +169,7 @@
         state.riposoStart = selectedDate;
         state.setupStep = 2;
         document.getElementById('btnConfirmDate').style.display = "none";
+        document.getElementById('btnCloseStep').style.display = "none"; // Nascondiamo il tasto seleziona/ok in questa fase
         document.getElementById('stepTitle').innerText = "Passo 3";
         document.getElementById('stepDateDisplay').innerText = formattaData(selectedDate);
         document.getElementById('stepDesc').innerText = "Ora seleziona il turno del giorno successivo al riposo:";
@@ -192,7 +193,9 @@
         document.getElementById('stepModal').style.display = 'block';
     }
 
-    function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
+    function chiudiStep() { 
+        document.getElementById('stepModal').style.display = 'none'; 
+    }
 
     function getOptionsTurni() {
         const turni = depositi[state.depositoAttivo];
@@ -276,5 +279,3 @@
 </script>
 </body>
 </html>
-
-
