@@ -90,6 +90,7 @@
 <div id="editModal">
     <div class="modal-content">
         <h3 id="modalDate" style="margin-top:0;">Data</h3>
+        <p id="currentTurnoLabel" style="font-weight: bold; color: var(--turno); margin-bottom: 5px;"></p>
         <p class="instruction-text">Cambia il turno per questo giorno:</p>
         <select id="singleTurnoSelect"></select>
         <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
@@ -171,25 +172,20 @@
     function procediAlTurno() {
         state.riposoStart = selectedDate;
         state.setupStep = 2;
-        
         let d = new Date(selectedDate);
         d.setDate(d.getDate() + 1);
         tempRotDate = d.toISOString().split('T')[0];
-        
         document.getElementById('btnConfirmDate').style.display = "none";
         document.getElementById('btnCloseStep').style.display = "none";
         document.getElementById('stepTitle').innerText = "Passo 3";
         document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
         document.getElementById('stepDesc').innerText = "Seleziona il turno per questo giorno:";
-        
         const area = document.getElementById('stepActionArea');
         area.innerHTML = `<select id="turnoSelectRotation"><option value="" disabled selected>Seleziona il turno...</option>${getOptionsTurni()}</select>`;
-        
         document.getElementById('turnoSelectRotation').onchange = function() {
             tempTurnoIndex = parseInt(this.value);
             document.getElementById('btnConfirmFinal').style.display = "block";
         };
-        document.getElementById('stepModal').style.display = 'block';
     }
 
     function attivaRotazioneFinale() {
@@ -198,6 +194,22 @@
         state.setupStep = 3;
         salvaLocal();
         location.reload();
+    }
+
+    function popolaCambioSingolo() {
+        // Trova il turno attualmente visualizzato nel calendario per quel giorno
+        const events = calendar.getEvents();
+        const currentEvent = events.find(e => e.startStr === selectedDate);
+        const currentTitle = currentEvent ? currentEvent.title : "Nessuno";
+        document.getElementById('currentTurnoLabel').innerText = "Turno attuale: " + currentTitle;
+
+        const s = document.getElementById('singleTurnoSelect');
+        s.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
+        let tutti = [];
+        for (let d in depositi) { depositi[d].forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }); }
+        [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
+            let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
+        });
     }
 
     function mostraStep(titolo, desc) {
@@ -236,16 +248,6 @@
     function aggiornaUI() {
         const label = document.querySelector(`#depotSelectMain option[value="${state.depositoAttivo}"]`)?.text || "Rotazione";
         document.getElementById('activeDepotLabel').innerText = label;
-    }
-
-    function popolaCambioSingolo() {
-        const s = document.getElementById('singleTurnoSelect');
-        s.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
-        let tutti = [];
-        for (let d in depositi) { depositi[d].forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }); }
-        [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
-            let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
-        });
     }
 
     function calcolaTurni() {
