@@ -1,118 +1,135 @@
-<div id="topBar" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #ddd;">
-    <h3 style="margin:0; font-size: 16px;">Calendario Turni</h3>
-    <button onclick="resetTotale()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Reset Calendario</button>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestione Turni F. Nove</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <style>
+        :root { --riposo: #28a745; --disp: #fd7e14; --turno: #007bff; --bg: #f8f9fa; }
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: var(--bg); }
+        #topBar { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 999; }
+        #calendar { background: white; padding: 10px; min-height: 90vh; }
+        .bg-riposo { background-color: var(--riposo) !important; border: none !important; }
+        .bg-disp { background-color: var(--disp) !important; border: none !important; }
+        .bg-turno { background-color: var(--turno) !important; border: none !important; }
+        .fc-event-title { font-weight: bold; font-size: 0.85em; }
+        #modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 15px; box-sizing: border-box; }
+        select, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .btn { padding: 12px; border: none; border-radius: 8px; color: white; cursor: pointer; width: 100%; margin-top: 8px; font-weight: bold; }
+        .btn-reset { background: #dc3545; padding: 5px 10px; width: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div id="topBar">
+    <h3 style="margin:0; font-size: 18px;">Calendario F. Nove</h3>
+    <button class="btn btn-reset" onclick="resetTotale()">Reset Totale</button>
+</div>
+
+<div id="calendar"></div>
+
+<div id="modal">
+    <div class="modal-content">
+        <h3 id="modalDate">Data</h3>
+        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo Singolo</button>
+        <div style="margin-top: 20px; border-top: 1px solid #eee;">
+            <label style="font-size: 13px; font-weight: bold;">Avvia Rotazione da qui:</label>
+            <select id="turnoSelect"></select>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Rotazione (2gg x turno)</button>
+        </div>
+        <div style="margin-top: 20px; border-top: 1px solid #eee;">
+            <label style="font-size: 13px; font-weight: bold;">Note / Cambi:</label>
+            <textarea id="notaArea" rows="2" placeholder="Es: Cambio con..."></textarea>
+            <button class="btn" style="background: #6c757d" onclick="salvaNota()">Salva Nota</button>
+        </div>
+        <button class="btn" style="background: #000; margin-top: 20px;" onclick="chiudiModal()">Chiudi</button>
+    </div>
 </div>
 
 <script>
+    // LISTA COMPLETA 43 TURNI DAL FILE CSV
     const turniDB = [
-        {s: "4P05", i: "P. Roma 04.55", f: "11.43"}, {s: "4P29", i: "F. Nove 18.04", f: "00.16"},
-        {s: "4P07", i: "F. Nove 12.43", f: "19.43"}, {s: "Disp", i: "Disponibile", f: ""},
-        {s: "4P18", i: "F. Nove 13.43", f: "20.43"}, {s: "4P09", i: "F. Nove 08.54", f: "15.34"},
-        {s: "4P04", i: "F. Nove 04.21", f: "10.34"}, {s: "4P15", i: "F. Nove 15.03", f: "21.41"},
-        {s: "Disp", i: "Disponibile", f: ""}, {s: "4P21", i: "F. Nove 06.21", f: "13.23"},
-        {s: "4P34", i: "F. Nove 15.01", f: "21.05"}, {s: "4P10", i: "F. Nove 10.01", f: "16.34"},
-        {s: "4P01", i: "F. Nove 04.57", f: "11.54"}, {s: "4P06", i: "F. Nove 13.41", f: "20.23"},
-        {s: "4P16", i: "F. Nove 11.02", f: "17.03"}, {s: "4P33", i: "F. Nove 04.27", f: "11.14"},
-        {s: "Disp", i: "Disponibile", f: ""}, {s: "4P03", i: "F. Nove 04.30", f: "10.33"},
-        {s: "4P19", i: "F. Nove 13.51", f: "20.53"}, {s: "4P20", i: "F. Nove 05.51", f: "12.53"},
-        {s: "4P11", i: "F. Nove 10.04", f: "16.37"}, {s: "4P31", i: "F. Nove 18.10", f: "00.16"},
-        {s: "4P02", i: "F. Nove 04.31", f: "11.23"}, {s: "4P22", i: "F. Nove 06.45", f: "13.43"},
-        {s: "Disp", i: "Disponibile", f: ""}, {s: "4P32", i: "F. Nove 18.25", f: "00.32"},
-        {s: "4P14", i: "F. Nove 14.54", f: "21.32"}, {s: "4P08", i: "F. Nove 12.54", f: "19.54"},
-        {s: "4P12", i: "F. Nove 10.32", f: "17.04"}, {s: "4P25", i: "F. Nove 07.21", f: "14.23"},
-        {s: "4P17", i: "F. Nove 11.21", f: "18.23"}, {s: "4P24", i: "F. Nove 07.13", f: "14.12"},
-        {s: "Disp", i: "Disponibile", f: ""}, {s: "4P28", i: "F. Nove 17.51", f: "23.51"},
-        {s: "4P23", i: "F. Nove 07.01", f: "14.03"}, {s: "4P26", i: "F. Nove 07.41", f: "14.43"},
-        {s: "4P30", i: "F. Nove 18.01", f: "00.03"}, {s: "4P27", i: "F. Nove 17.41", f: "23.43"},
-        {s: "4P13", i: "F. Nove 14.41", f: "21.23"}, {s: "Disp", i: "Disponibile", f: ""}
+        {s:"4P05", i:"04.55", f:"11.43", li:"P. Roma"}, {s:"4P29", i:"18.04", f:"00.16", li:"F. Nove"},
+        {s:"4P07", i:"12.43", f:"19.43", li:"F. Nove"}, {s:"Disp", i:"-", f:"-", li:"F. Nove"},
+        {s:"4P18", i:"13.43", f:"20.43", li:"F. Nove"}, {s:"4P09", i:"08.54", f:"15.34", li:"F. Nove"},
+        {s:"4P04", i:"04.21", f:"10.34", li:"F. Nove"}, {s:"4P15", i:"15.03", f:"21.41", li:"F. Nove"},
+        {s:"Disp", i:"-", f:"-", li:"F. Nove"}, {s:"4P21", i:"06.21", f:"13.23", li:"F. Nove"},
+        {s:"4P34", i:"15.01", f:"21.05", li:"F. Nove"}, {s:"4P10", i:"10.01", f:"16.34", li:"F. Nove"},
+        {s:"4P01", i:"04.57", f:"11.54", li:"F. Nove"}, {s:"4P06", i:"13.41", f:"20.23", li:"F. Nove"},
+        {s:"4P16", i:"11.02", f:"17.03", li:"F. Nove"}, {s:"4P33", i:"04.27", f:"11.14", li:"F. Nove"},
+        {s:"Disp", i:"-", f:"-", li:"F. Nove"}, {s:"4P03", i:"04.30", f:"10.33", li:"F. Nove"},
+        {s:"4P19", i:"13.51", f:"20.53", li:"F. Nove"}, {s:"4P20", i:"05.51", f:"12.53", li:"F. Nove"},
+        {s:"4P11", i:"10.04", f:"16.37", li:"F. Nove"}, {s:"4P31", i:"18.10", f:"00.16", li:"F. Nove"},
+        {s:"4P02", i:"04.31", f:"11.23", li:"F. Nove"}, {s:"4P22", i:"06.45", f:"13.43", li:"F. Nove"},
+        {s:"Disp", i:"-", f:"-", li:"F. Nove"}, {s:"4P32", i:"18.25", f:"00.32", li:"F. Nove"},
+        {s:"4P14", i:"14.54", f:"21.32", li:"F. Nove"}, {s:"4P08", i:"12.54", f:"19.54", li:"F. Nove"},
+        {s:"4P12", i:"10.32", f:"17.04", li:"F. Nove"}, {s:"4P25", i:"07.21", f:"14.23", li:"F. Nove"},
+        {s:"4P17", i:"11.21", f:"18.23", li:"F. Nove"}, {s:"4P24", i:"07.13", f:"14.12", li:"F. Nove"},
+        {s:"Disp", i:"-", f:"-", li:"F. Nove"}, {s:"4P28", i:"17.51", f:"23.51", li:"F. Nove"},
+        {s:"4P23", i:"07.01", f:"14.03", li:"F. Nove"}, {s:"4P26", i:"07.41", f:"14.43", li:"F. Nove"},
+        {s:"4P30", i:"18.01", f:"00.03", li:"F. Nove"}, {s:"4P27", i:"17.41", f:"23.43", li:"F. Nove"},
+        {s:"4P13", i:"14.41", f:"21.23", li:"F. Nove"}, {s:"Disp", i:"-", f:"-", li:"F. Nove"},
+        {s:"4P05", i:"04.55", f:"11.43", li:"P. Roma"}, {s:"4P29", i:"18.04", f:"00.16", li:"F. Nove"},
+        {s:"4P07", i:"12.43", f:"19.43", li:"F. Nove"}
     ];
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, note: {} };
     let selectedDate = null;
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Popola tendina turni
         const select = document.getElementById('turnoSelect');
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
             opt.value = i;
-            opt.textContent = t.s + (t.f ? " (" + t.i + "-" + t.f + ")" : "");
+            opt.textContent = `${t.s} (${t.i}-${t.f}) - ${t.li}`;
             select.appendChild(opt);
         });
 
-        // Inizializza Calendario
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            locale: 'it',
-            firstDay: 1,
+        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            initialView: 'dayGridMonth', locale: 'it', firstDay: 1,
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: (info) => apriModal(info.dateStr),
-            events: calcolaCalendario()
+            events: (info, success) => success(calcolaCalendario())
         });
         calendar.render();
-
-        // Controllo primo avvio
-        if (!state.riposoStart) {
-            setTimeout(() => {
-                alert("Benvenuto! Per iniziare:\n1. Clicca sul giorno del tuo primo RIPOSO SINGOLO.\n2. Seleziona 'Imposta come 1° Riposo Singolo'.");
-            }, 500);
-        } else if (!state.rotazioneStart) {
-            setTimeout(() => {
-                alert("Ottimo! Ora clicca su un giorno lavorativo per avviare la rotazione dei turni.");
-            }, 500);
-        }
+        if (!state.riposoStart) setTimeout(() => alert("Imposta il 1° RIPOSO SINGOLO."), 600);
     });
 
     function calcolaCalendario() {
         if (!state.riposoStart) return [];
-        let evs = [];
-        let refDate = new Date(state.riposoStart);
-        refDate.setHours(0,0,0,0);
+        let evs = [], ref = new Date(state.riposoStart); ref.setHours(0,0,0,0);
+        let curr = new Date(ref); curr.setMonth(curr.getMonth() - 4);
+        let end = new Date(ref); end.setMonth(end.getMonth() + 10);
 
-        let startDate = new Date(refDate); startDate.setMonth(startDate.getMonth() - 4);
-        let endDate = new Date(refDate); endDate.setMonth(endDate.getMonth() + 8);
-        let curr = new Date(startDate);
+        while(curr <= end) {
+            let dStr = curr.toISOString().split('T')[0];
+            let diff = Math.round((curr - ref) / 86400000);
+            let pos = ((diff + 6) % 15 + 15) % 15;
+            let isR = (pos === 6 || pos === 13 || pos === 14);
 
-        while(curr <= endDate) {
-            let dateStr = curr.toISOString().split('T')[0];
-            let diffDays = Math.round((curr - refDate) / (1000 * 60 * 60 * 24));
-            
-            // Ciclo 15gg: 0-5 L, 6 R (singolo), 7-12 L, 13-14 R (doppio)
-            let posCiclo = ((diffDays + 6) % 15 + 15) % 15;
-            let isRiposo = (posCiclo === 6 || posCiclo === 13 || posCiclo === 14);
-
-            if (isRiposo) {
-                evs.push({ title: 'RIPOSO', start: dateStr, className: 'bg-riposo' });
+            if (isR) {
+                evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo' });
             } else if (state.rotazioneStart) {
-                let rotStart = new Date(state.rotazioneStart);
-                rotStart.setHours(0,0,0,0);
-                
-                if (curr >= rotStart) {
-                    let workingDaysCount = 0;
-                    let tempDate = new Date(rotStart);
-                    while (tempDate < curr) {
-                        let dDiff = Math.round((tempDate - refDate) / (1000 * 60 * 60 * 24));
-                        let pCiclo = ((dDiff + 6) % 15 + 15) % 15;
-                        if (!(pCiclo === 6 || pCiclo === 13 || pCiclo === 14)) workingDaysCount++;
-                        tempDate.setDate(tempDate.getDate() + 1);
+                let rotS = new Date(state.rotazioneStart); rotS.setHours(0,0,0,0);
+                if (curr >= rotS) {
+                    let wDays = 0, temp = new Date(rotS);
+                    while (temp < curr) {
+                        let dD = Math.round((temp - ref) / 86400000);
+                        let pC = ((dD + 6) % 15 + 15) % 15;
+                        if (!(pC === 6 || pC === 13 || pC === 14)) wDays++;
+                        temp.setDate(temp.getDate() + 1);
                     }
-                    let turnoIdx = (state.turnoIndex + Math.floor(workingDaysCount / 2)) % turniDB.length;
-                    let t = turniDB[turnoIdx];
-                    evs.push({ title: t.s, start: dateStr, className: t.s === 'Disp' ? 'bg-disp' : 'bg-turno', extendedProps: { info: t.i + " - " + t.f } });
+                    let tIdx = (state.turnoIndex + Math.floor(wDays / 2)) % turniDB.length;
+                    let t = turniDB[tIdx];
+                    evs.push({ title: t.s, start: dStr, className: t.s.includes('Disp') ? 'bg-disp' : 'bg-turno' });
                 }
             }
-            if (state.note[dateStr]) evs.push({ title: "📝 " + state.note[dateStr], start: dateStr, display: 'list-item', color: '#333' });
+            if (state.note[dStr]) evs.push({ title: state.note[dStr], start: dStr, display: 'list-item', color: 'red' });
             curr.setDate(curr.getDate() + 1);
         }
         return evs;
-    }
-
-    function resetTotale() {
-        if (confirm("Vuoi davvero cancellare tutto il calendario e le note?")) {
-            localStorage.removeItem('myTurniApp');
-            location.reload();
-        }
     }
 
     function apriModal(date) {
@@ -121,29 +138,17 @@
         document.getElementById('notaArea').value = state.note[date] || "";
         document.getElementById('modal').style.display = 'block';
     }
-
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
-
-    function setRiposoSingolo() {
-        state.riposoStart = selectedDate;
-        state.rotazioneStart = null; 
-        salva();
-    }
-
+    function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; salva(); }
     function avviaRotazione() {
-        if (!state.riposoStart) { alert("Imposta prima il riposo!"); return; }
+        if (!state.riposoStart) return alert("Imposta prima il riposo!");
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelect').value);
         salva();
     }
-
-    function salvaNota() {
-        state.note[selectedDate] = document.getElementById('notaArea').value;
-        salva();
-    }
-
-    function salva() {
-        localStorage.setItem('myTurniApp', JSON.stringify(state));
-        location.reload();
-    }
+    function salvaNota() { state.note[selectedDate] = document.getElementById('notaArea').value; salva(); }
+    function resetTotale() { if (confirm("Cancellare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
 </script>
+</body>
+</html>
