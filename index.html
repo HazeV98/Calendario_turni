@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Turni Ferrovia F. Nove</title>
+    <title>Calendario Turni Ferrovia</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         :root { --riposo: #28a745; --disp: #fd7e14; --turno: #007bff; --bg: #f8f9fa; }
@@ -13,9 +13,9 @@
         .bg-riposo { background-color: var(--riposo) !important; border: none !important; }
         .bg-disp { background-color: var(--disp) !important; border: none !important; }
         .bg-turno { background-color: var(--turno) !important; border: none !important; }
-        #modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }
-        .modal-content { background: white; margin: 10px auto; padding: 20px; width: 90%; max-width: 400px; border-radius: 15px; box-sizing: border-box; }
-        select, textarea { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        #modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); }
+        .modal-content { background: white; margin: 15% auto; padding: 20px; width: 90%; max-width: 400px; border-radius: 15px; box-sizing: border-box; }
+        select { width: 100%; margin: 10px 0; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
         .btn { padding: 12px; border: none; border-radius: 8px; color: white; cursor: pointer; width: 100%; margin-top: 8px; font-weight: bold; }
         .btn-reset { background: #dc3545; padding: 5px 10px; width: auto; font-size: 12px; }
     </style>
@@ -23,46 +23,37 @@
 <body>
 
 <div id="topBar">
-    <h3 style="margin:0; font-size: 18px;">Gestione Turni</h3>
-    <button class="btn btn-reset" onclick="resetTotale()">Reset Totale</button>
+    <h3 style="margin:0;">Gestione Turni</h3>
+    <button class="btn btn-reset" onclick="resetTotale()">RESET DATI</button>
 </div>
 
 <div id="calendar"></div>
 
 <div id="modal">
     <div class="modal-content">
-        <h3 id="modalDate">Data</h3>
-        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta 1° Riposo Singolo</button>
+        <h3 id="modalDate" style="margin-top:0;">Data</h3>
+        <button class="btn" style="background: var(--riposo)" onclick="setRiposoSingolo()">Imposta come 1° Riposo Singolo</button>
         <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
-            <label style="font-size: 13px; font-weight: bold;">Inizia rotazione da qui:</label>
+            <label style="font-size: 13px; font-weight: bold;">Inizia rotazione da questo turno:</label>
             <select id="turnoSelect"></select>
-            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Turno (2gg lavoro)</button>
-        </div>
-        <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
-            <textarea id="notaArea" rows="2" placeholder="Note..."></textarea>
-            <button class="btn" style="background: #6c757d" onclick="salvaNota()">Salva Nota</button>
+            <button class="btn" style="background: var(--turno)" onclick="avviaRotazione()">Applica Turno (2gg)</button>
         </div>
         <button class="btn" style="background: #000; margin-top: 15px;" onclick="chiudiModal()">Chiudi</button>
     </div>
 </div>
 
 <script>
-    // LISTA CORRETTA - ALLINEATA AL TUO FOGLIO EXCEL (RIGA 25 = 4P11)
+    // LA TUA LISTA ESATTA (44 TURNI)
     const turniDB = [
-        {s:"Disp", t:"-"}, {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}, // 1-4
-        {s:"Disp", t:"-"}, {s:"4P18", t:"13.43"}, {s:"4P09", t:"08.54"}, {s:"4P04", t:"04.21"}, // 5-8
-        {s:"4P15", t:"15.03"}, {s:"Disp", t:"-"}, {s:"4P21", t:"06.21"}, {s:"4P34", t:"15.01"}, // 9-12
-        {s:"4P10", t:"10.01"}, {s:"4P01", t:"04.57"}, {s:"4P06", t:"13.41"}, {s:"4P16", t:"11.02"}, // 13-16
-        {s:"4P33", t:"04.27"}, {s:"Disp", t:"-"}, {s:"4P03", t:"04.30"}, {s:"4P19", t:"13.51"}, // 17-20
-        {s:"4P20", t:"05.51"}, {s:"4P11", t:"10.04"}, {s:"4P31", t:"18.10"}, {s:"4P02", t:"04.31"}, // 21-24
-        {s:"4P11", t:"10.04"}, {s:"4P14", t:"14.54"}, {s:"Disp", t:"-"}, {s:"4P08", t:"12.54"}, // 25, 26, 27, 28
-        {s:"4P12", t:"10.32"}, {s:"4P25", t:"07.21"}, {s:"4P17", t:"11.21"}, {s:"4P24", t:"07.13"}, // 29-32
-        {s:"Disp", t:"-"}, {s:"4P28", t:"17.51"}, {s:"4P23", t:"07.01"}, {s:"4P26", t:"07.41"}, // 33-36
-        {s:"4P30", t:"18.01"}, {s:"4P27", t:"17.41"}, {s:"4P13", t:"14.41"}, {s:"Disp", t:"-"}, // 37-40
-        {s:"4P05", t:"04.55"}, {s:"4P29", t:"18.04"}, {s:"4P07", t:"12.43"}                    // 41-43
+        "disp","4p05","4p29","4p07","disp","4p18","4p09","4p04",
+        "4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16",
+        "4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11",
+        "4p14","disp","4p17","4p37","4p35","4p03","4p23","4p22",
+        "4p31","4p02","4p13","disp","4p36","4p38","disp","m204",
+        "4p12","m205","4p26","4p20"
     ];
 
-    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0, note: {} };
+    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { riposoStart: null, rotazioneStart: null, turnoIndex: 0 };
     let selectedDate = null;
 
     function stringToNumber(dateStr) {
@@ -75,7 +66,7 @@
         turniDB.forEach((t, i) => {
             let opt = document.createElement('option');
             opt.value = i;
-            opt.textContent = "RIGA " + (i+1) + ": " + t.s + (t.t !== '-' ? " (" + t.t + ")" : "");
+            opt.textContent = (i + 1) + ". " + t.toUpperCase();
             select.appendChild(opt);
         });
 
@@ -83,11 +74,9 @@
             initialView: 'dayGridMonth',
             locale: 'it',
             firstDay: 1,
-            headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+            headerToolbar: { left: 'prev,next', center: 'title' },
             dateClick: function(info) { apriModal(info.dateStr); },
-            events: function(info, successCallback) {
-                successCallback(calcolaCalendario());
-            }
+            events: function(info, successCallback) { successCallback(calcolaCalendario()); }
         });
         calendar.render();
     });
@@ -97,11 +86,12 @@
         let evs = [];
         let refNum = stringToNumber(state.riposoStart);
         
-        for (let i = -60; i < 400; i++) {
+        for (let i = -60; i < 365; i++) {
             let currentNum = refNum + i;
             let d = new Date(currentNum * 86400000);
             let dStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
 
+            // Ciclo 15 giorni
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
 
@@ -110,43 +100,34 @@
             } else if (state.rotazioneStart) {
                 let rotNum = stringToNumber(state.rotazioneStart);
                 if (currentNum >= rotNum) {
-                    let workingDaysCount = 0;
+                    let wDays = 0;
                     for (let j = rotNum; j < currentNum; j++) {
                         let diffJ = j - refNum;
                         let posJ = ((diffJ + 6) % 15 + 15) % 15;
-                        if (!(posJ === 6 || posJ === 13 || posJ === 14)) workingDaysCount++;
+                        if (!(posJ === 6 || posJ === 13 || posJ === 14)) wDays++;
                     }
-                    let tIdx = (state.turnoIndex + Math.floor(workingDaysCount / 2)) % turniDB.length;
-                    let t = turniDB[tIdx];
-                    evs.push({ 
-                        title: t.s, 
-                        start: dStr, 
-                        className: (t.s === 'Disp' ? 'bg-disp' : 'bg-turno'), 
-                        allDay: true 
-                    });
+                    let tIdx = (state.turnoIndex + Math.floor(wDays / 2)) % turniDB.length;
+                    let t = turniDB[tIdx].toUpperCase();
+                    evs.push({ title: t, start: dStr, className: (t === 'DISP' ? 'bg-disp' : 'bg-turno'), allDay: true });
                 }
             }
-            if (state.note[dStr]) evs.push({ title: "📝 " + state.note[dStr], start: dStr, display: 'list-item', color: 'red', allDay: true });
         }
         return evs;
     }
 
     function apriModal(date) {
         selectedDate = date;
-        document.getElementById('modalDate').innerText = "Data: " + date;
-        document.getElementById('notaArea').value = state.note[date] || "";
+        document.getElementById('modalDate').innerText = date;
         document.getElementById('modal').style.display = 'block';
     }
     function chiudiModal() { document.getElementById('modal').style.display = 'none'; }
     function setRiposoSingolo() { state.riposoStart = selectedDate; state.rotazioneStart = null; salva(); }
     function avviaRotazione() {
-        if(!state.riposoStart) return alert("Imposta prima il Riposo!");
         state.rotazioneStart = selectedDate;
         state.turnoIndex = parseInt(document.getElementById('turnoSelect').value);
         salva();
     }
-    function salvaNota() { state.note[selectedDate] = document.getElementById('notaArea').value; salva(); }
-    function resetTotale() { if(confirm("Vuoi resettare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Resettare tutti i dati?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salva() { localStorage.setItem('myTurniApp', JSON.stringify(state)); location.reload(); }
 </script>
 </body>
