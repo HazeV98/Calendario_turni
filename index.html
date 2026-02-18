@@ -113,12 +113,12 @@
     const depositi = {
         rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
         spez_fnove: ["4p19", "4p28", "4p30"],
-        rot_proma: ["ROT P.ROMA ESEMPIO"],
-        spez_proma: ["SPEZ P.ROMA ESEMPIO"],
-        rot_szaccaria: ["ROT S.ZACCARIA ESEMPIO"],
-        spez_szaccaria: ["SPEZ S.ZACCARIA ESEMPIO"],
-        rot_lido: ["ROT LIDO ESEMPIO"],
-        spez_lido: ["SPEZ LIDO ESEMPIO"]
+        rot_proma: ["ESEMPIO ROT P.ROMA"],
+        spez_proma: ["ESEMPIO SPEZ P.ROMA"],
+        rot_szaccaria: ["ESEMPIO ROT S.ZACCARIA"],
+        spez_szaccaria: ["ESEMPIO SPEZ S.ZACCARIA"],
+        rot_lido: ["ESEMPIO ROT LIDO"],
+        spez_lido: ["ESEMPIO SPEZ LIDO"]
     };
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { depositoAttivo: null, riposoStart: null, rotazioneStart: null, turnoIndex: 0, variazioni: {} };
@@ -208,17 +208,22 @@
         let evs = [];
         let turniAttuali = depositi[state.depositoAttivo];
         let refNum = stringToNumber(state.riposoStart);
-        for (let i = -60; i < 400; i++) {
+        
+        for (let i = -100; i < 500; i++) {
             let currentNum = refNum + i;
             let dStr = new Date(currentNum * 86400000).toISOString().split('T')[0];
+            
             if (state.variazioni && state.variazioni[dStr] !== undefined) {
                 let v = state.variazioni[dStr];
                 let title = (typeof v === 'number') ? turniAttuali[v].toUpperCase() : v;
                 evs.push({ title: title, start: dStr, className: title === "RIPOSO" ? 'bg-riposo' : (title === "DISPONIBILE" ? 'bg-disp' : 'bg-modificato'), allDay: true });
                 continue;
             }
+
+            // CADENZA 6+1, 6+2 (Ciclo di 15 giorni)
             let pos = ((i + 6) % 15 + 15) % 15;
             let isR = (pos === 6 || pos === 13 || pos === 14);
+
             if (isR) {
                 evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
             } else if (state.rotazioneStart) {
