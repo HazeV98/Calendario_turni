@@ -26,7 +26,6 @@
 
         #calendar { background: white; padding: 2px; border-radius: 15px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
-        /* Ottimizzazioni per schermi piccoli */
         .fc .fc-toolbar-title { font-size: 1.2em !important; }
         .fc .fc-button { padding: 5px 10px !important; font-size: 0.9em !important; }
         .fc .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; }
@@ -115,7 +114,7 @@
         <div id="infoTurniArea" class="info-cambio"></div>
         <p class="instruction-text">Cambia il turno per questo giorno:</p>
         <select id="singleTurnoSelect"></select>
-        <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
+        <button id="btnSalvaCambio" class="btn" style="background: #32325d" onclick="salvaCambioSingolo()" disabled>Salva Cambio</button>
         <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
         <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiEdit()">Chiudi</button>
     </div>
@@ -148,6 +147,11 @@
         document.getElementById('depotSelectMain').addEventListener('change', function() {
             document.getElementById('btnConfRot').disabled = false;
             document.getElementById('btnConfRot').style.background = 'var(--turno)';
+        });
+        
+        // Listener per abilitare il tasto salva quando si sceglie un turno
+        document.getElementById('singleTurnoSelect').addEventListener('change', function() {
+            if(this.value !== "") document.getElementById('btnSalvaCambio').disabled = false;
         });
     });
 
@@ -227,11 +231,16 @@
         area.innerHTML = `<div><strong>Turno attuale:</strong> ${attuale}</div>` + (state.variazioni[dStr] ? `<div style="color: #f5365c; font-size: 0.85em; margin-top:5px;"><strong>Originale da rotazione:</strong> ${originale}</div>` : "");
         
         const s = document.getElementById('singleTurnoSelect');
-        s.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
+        // MODIFICA RICHIESTA: Placeholder come prima opzione
+        s.innerHTML = '<option value="" disabled selected>Seleziona turno...</option>';
+        s.innerHTML += '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
+        
         let tutti = []; Object.values(depositi).forEach(list => list.forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }));
         [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
             let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
         });
+        
+        document.getElementById('btnSalvaCambio').disabled = true;
     }
 
     function inizializzaCalendario() {
@@ -290,4 +299,3 @@
 </script>
 </body>
 </html>
-
