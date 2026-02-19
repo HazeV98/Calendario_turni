@@ -19,30 +19,23 @@
         }
 
         #topBar { 
-            padding: 10px 15px; display: flex; justify-content: space-between; 
+            padding: 15px 20px; display: flex; justify-content: space-between; 
             align-items: center; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             position: sticky; top: 0; z-index: 100;
         }
 
-        /* Ottimizzazione Calendario per Schermi Piccoli */
-        #calendar { 
-            background: white; padding: 2px; border-radius: 12px; margin: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-        }
+        #calendar { background: white; padding: 2px; border-radius: 15px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
-        /* Testi più piccoli nelle celle per mobile */
-        .fc .fc-toolbar-title { font-size: 1.1em !important; }
-        .fc .fc-button { padding: 4px 8px !important; font-size: 0.85em !important; }
-        .fc .fc-col-header-cell-cushion { font-size: 0.85em; }
-        .fc .fc-daygrid-day-number { font-size: 0.85em; padding: 4px !important; }
+        /* Ottimizzazioni per schermi piccoli */
+        .fc .fc-toolbar-title { font-size: 1.2em !important; }
+        .fc .fc-button { padding: 5px 10px !important; font-size: 0.9em !important; }
+        .fc .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; }
         
-        /* Eventi più compatti */
         .fc-event { 
-            border: none !important; padding: 4px 2px !important; 
-            margin: 1px 0 !important; border-radius: 4px !important; 
-            font-weight: 700 !important; font-size: 0.75em !important; 
+            border: none !important; padding: 6px 4px !important; 
+            margin: 2px 0 !important; border-radius: 6px !important; 
+            font-weight: 700 !important; font-size: 0.85em !important; 
             text-align: center; cursor: pointer !important;
-            white-space: nowrap; overflow: hidden;
         }
 
         .bg-riposo { background-color: var(--riposo) !important; }
@@ -51,24 +44,25 @@
         .bg-modificato { background-color: #f5365c !important; }
 
         .disclaimer-banner {
-            margin: 10px; padding: 10px; background-color: #fff3cd;
-            border: 1px solid #ffeeba; border-radius: 8px; color: #856404;
-            font-size: 11px; text-align: center; font-style: italic;
+            margin: 15px 10px; padding: 12px; background-color: #fff3cd;
+            border: 1px solid #ffeeba; border-radius: 10px; color: #856404;
+            font-size: 13px; text-align: center; font-style: italic;
         }
 
         #welcomeModal, #stepModal, #editModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 85%; max-width: 350px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
+        .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
 
-        select { width: 100%; margin: 10px 0; padding: 12px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 16px; background: white; -webkit-appearance: none; }
-        .btn { padding: 14px; border: none; border-radius: 12px; color: white; cursor: pointer; width: 100%; margin-top: 8px; font-weight: bold; font-size: 14px; }
-        .btn-reset { background: #f5365c; padding: 6px 12px; width: auto; font-size: 11px; }
-        .deposito-tag { font-size: 10px; background: #eef2ff; color: var(--turno); padding: 3px 6px; border-radius: 4px; font-weight: bold; }
-        .info-cambio { font-size: 0.85em; margin-bottom: 12px; padding: 8px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--turno); text-align: left; }
+        select { width: 100%; margin: 15px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: white; -webkit-appearance: none; }
+        .btn { padding: 16px; border: none; border-radius: 14px; color: white; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 15px; }
+        .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 12px; }
+        .instruction-text { font-size: 15px; line-height: 1.6; color: #525f7f; margin-bottom: 10px; }
+        .deposito-tag { font-size: 10px; background: #eef2ff; color: var(--turno); padding: 4px 8px; border-radius: 5px; font-weight: bold; }
+        .date-display { font-weight: bold; color: var(--turno); font-size: 1.1em; display: block; margin-bottom: 10px; }
+        .info-cambio { font-size: 0.9em; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid var(--turno); text-align: left; }
 
-        /* Media query per schermi piccolissimi */
-        @media (max-width: 360px) {
-            .fc .fc-toolbar-title { font-size: 0.9em !important; }
-            .fc-event { font-size: 0.7em !important; }
+        @media (max-width: 400px) {
+            .fc-event { font-size: 0.75em !important; padding: 4px 2px !important; }
+            .modal-content { margin: 20% auto; padding: 20px; }
         }
     </style>
 </head>
@@ -76,7 +70,7 @@
 
 <div id="topBar">
     <div>
-        <h2 style="margin:0; font-size: 16px;">Gestione Turni</h2>
+        <h2 style="margin:0; font-size: 18px;">Gestione Turni</h2>
         <span id="activeDepotLabel" class="deposito-tag">Configurazione...</span>
     </div>
     <button class="btn btn-reset" onclick="resetTotale()">RESET</button>
@@ -85,7 +79,7 @@
 <div id="welcomeModal">
     <div class="modal-content">
         <h3 style="color: var(--turno); margin-top: 0;">Benvenuto!</h3>
-        <p style="font-size: 14px;">In quale rotazione lavori?</p>
+        <p class="instruction-text">In quale rotazione lavori?</p>
         <select id="depotSelectMain">
             <option value="" disabled selected>Scegli rotazione...</option>
             <option value="rot_fnove">Rotazione F.Nove</option>
@@ -103,37 +97,37 @@
 
 <div id="stepModal">
     <div class="modal-content">
-        <h3 id="stepTitle" style="color: var(--turno); margin: 0 0 10px 0;">Passo 2</h3>
-        <span id="stepDateDisplay" style="font-weight: bold; color: var(--turno); display: block; margin-bottom: 10px;"></span>
-        <p id="stepDesc" style="font-size: 14px; color: #525f7f;"></p>
+        <h3 id="stepTitle" style="color: var(--turno); margin-top: 0;">Passo 2</h3>
+        <span id="stepDateDisplay" class="date-display"></span>
+        <p id="stepDesc" class="instruction-text"></p>
         <div id="stepActionArea"></div>
         <div id="stepButtons">
             <button id="btnConfirmDate" class="btn" style="background: var(--riposo); display:none;" onclick="procediAlTurno()">Sì, conferma data</button>
             <button id="btnConfirmFinal" class="btn" style="background: var(--riposo); display:none;" onclick="attivaRotazioneFinale()">Conferma Turno e Attiva</button>
-            <button id="btnCloseStep" class="btn" style="background: #f8f9fa; color: #525f7f;" onclick="chiudiStep()">Seleziona</button>
+            <button id="btnCloseStep" class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Seleziona</button>
         </div>
     </div>
 </div>
 
 <div id="editModal">
     <div class="modal-content">
-        <h3 id="modalDate" style="margin-top:0; font-size: 18px;">Data</h3>
+        <h3 id="modalDate" style="margin-top:0;">Data</h3>
         <div id="infoTurniArea" class="info-cambio"></div>
+        <p class="instruction-text">Cambia il turno per questo giorno:</p>
         <select id="singleTurnoSelect"></select>
         <button class="btn" style="background: #32325d" onclick="salvaCambioSingolo()">Salva Cambio</button>
-        <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina</button>
-        <button class="btn" style="background: #f8f9fa; color: #525f7f;" onclick="chiudiEdit()">Chiudi</button>
+        <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiEdit()">Chiudi</button>
     </div>
 </div>
 
 <div id="calendar"></div>
 
 <div class="disclaimer-banner">
-    ⚠️ Strumento non ufficiale. Può presentare errori.
+    ⚠️ Questo è uno strumento non ufficiale che può presentare errori.
 </div>
 
 <script>
-    // Liste Turni (Identiche a prima)
     const depositi = {
         rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
         spez_fnove: ["4p19", "4p28", "4p30"],
@@ -152,8 +146,8 @@
         if(!state.depositoAttivo) document.getElementById('welcomeModal').style.display = 'block';
         else { aggiornaUI(); inizializzaCalendario(); checkGuidaIniziale(); }
         document.getElementById('depotSelectMain').addEventListener('change', function() {
-            const btn = document.getElementById('btnConfRot');
-            btn.disabled = false; btn.style.background = 'var(--turno)';
+            document.getElementById('btnConfRot').disabled = false;
+            document.getElementById('btnConfRot').style.background = 'var(--turno)';
         });
     });
 
@@ -165,19 +159,26 @@
     }
 
     function checkGuidaIniziale() {
-        if (state.setupStep === 1) mostraStep("Passo 2", "Tocca la data di un tuo riposo singolo");
+        if (state.setupStep === 1) {
+            mostraStep("Passo 2", "Seleziona la data di un tuo riposo singolo");
+            document.getElementById('stepDateDisplay').innerText = "";
+            document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnConfirmFinal').style.display = "none";
+            document.getElementById('btnCloseStep').innerText = "Seleziona";
+        }
     }
 
     function gestisciInterazione(date) {
         selectedDate = date;
         if (state.setupStep === 1) {
-            document.getElementById('stepDateDisplay').innerText = formattaData(date);
-            document.getElementById('stepDesc').innerText = "Confermi che è un riposo singolo?";
+            document.getElementById('stepDateDisplay').innerText = formattaDataTesto(date);
+            document.getElementById('stepDesc').innerText = "Hai selezionato questa data. Confermi che è un riposo singolo?";
             document.getElementById('btnConfirmDate').style.display = "block";
-            document.getElementById('btnCloseStep').innerText = "Cambia";
+            document.getElementById('btnConfirmFinal').style.display = "none";
+            document.getElementById('btnCloseStep').innerText = "Cambia data";
             document.getElementById('stepModal').style.display = 'block';
         } else if (state.setupStep >= 3) {
-            document.getElementById('modalDate').innerText = formattaData(date);
+            document.getElementById('modalDate').innerText = formattaDataTesto(date);
             popolaCambioSingolo();
             document.getElementById('editModal').style.display = 'block';
         }
@@ -189,10 +190,11 @@
         let d = new Date(selectedDate); d.setDate(d.getDate() + 1);
         tempRotDate = d.toISOString().split('T')[0];
         document.getElementById('btnConfirmDate').style.display = "none";
+        document.getElementById('btnCloseStep').style.display = "none";
         document.getElementById('stepTitle').innerText = "Passo 3";
-        document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
-        document.getElementById('stepDesc').innerText = "Che turno avevi il giorno dopo?";
-        document.getElementById('stepActionArea').innerHTML = `<select id="turnoSelectRotation"><option value="" disabled selected>Seleziona...</option>${getOptionsTurni()}</select>`;
+        document.getElementById('stepDateDisplay').innerText = formattaDataTesto(tempRotDate);
+        document.getElementById('stepDesc').innerText = "Seleziona il turno per questo giorno:";
+        document.getElementById('stepActionArea').innerHTML = `<select id="turnoSelectRotation"><option value="" disabled selected>Seleziona il turno...</option>${getOptionsTurni()}</select>`;
         document.getElementById('turnoSelectRotation').onchange = function() {
             tempTurnoIndex = parseInt(this.value);
             document.getElementById('btnConfirmFinal').style.display = "block";
@@ -214,8 +216,7 @@
         else if (state.rotazioneStart) {
             let rot = stringToNum(state.rotazioneStart);
             if (curr >= rot) {
-                let w = 0;
-                for (let j = rot; j < curr; j++) {
+                let w = 0; for (let j = rot; j < curr; j++) {
                     let pJ = ((j - ref + 6) % 15 + 15) % 15;
                     if (!(pJ === 6 || pJ === 13 || pJ === 14)) w++;
                 }
@@ -223,7 +224,7 @@
             }
         }
         const attuale = state.variazioni[dStr] || originale;
-        area.innerHTML = `<div><strong>Ora:</strong> ${attuale}</div>` + (state.variazioni[dStr] ? `<div style="color: #f5365c; font-size: 0.8em; margin-top:4px;"><strong>Orig:</strong> ${originale}</div>` : "");
+        area.innerHTML = `<div><strong>Turno attuale:</strong> ${attuale}</div>` + (state.variazioni[dStr] ? `<div style="color: #f5365c; font-size: 0.85em; margin-top:5px;"><strong>Originale da rotazione:</strong> ${originale}</div>` : "");
         
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="RIPOSO">RIPOSO</option><option value="DISPONIBILE">DISPONIBILE</option>';
@@ -238,8 +239,8 @@
             initialView: 'dayGridMonth', locale: 'it', firstDay: 1, height: 'auto',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: (info) => gestisciInterazione(info.dateStr),
-            events: (info, success) => success(calcolaTurni()),
-            dayMaxEvents: 2 // Evita che le celle si allunghino troppo su mobile
+            eventClick: (info) => { info.jsEvent.preventDefault(); gestisciInterazione(info.event.startStr); },
+            events: (info, success) => success(calcolaTurni())
         });
         calendar.render();
     }
@@ -247,15 +248,15 @@
     function calcolaTurni() {
         if (!state.riposoStart) return [];
         let evs = [], turni = depositi[state.depositoAttivo], ref = stringToNum(state.riposoStart);
-        for (let i = -30; i < 120; i++) {
+        for (let i = -60; i < 400; i++) {
             let curr = ref + i, dStr = new Date(curr * 86400000).toISOString().split('T')[0];
             if (state.variazioni[dStr]) {
                 let v = state.variazioni[dStr];
-                evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':(v==='DISPONIBILE'?'bg-disp':'bg-modificato') });
+                evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':(v==='DISPONIBILE'?'bg-disp':'bg-modificato'), allDay: true });
                 continue;
             }
             let pos = ((i + 6) % 15 + 15) % 15, isR = (pos === 6 || pos === 13 || pos === 14);
-            if (isR) evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo' });
+            if (isR) evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
             else if (state.rotazioneStart) {
                 let rot = stringToNum(state.rotazioneStart);
                 if (curr >= rot) {
@@ -264,25 +265,21 @@
                         if (!(pJ === 6 || pJ === 13 || pJ === 14)) w++;
                     }
                     let t = turni[(state.turnoIndex + Math.floor(w/2)) % turni.length].toUpperCase();
-                    evs.push({ title: t, start: dStr, className: t==='DISP'?'bg-disp':'bg-turno' });
+                    evs.push({ title: t, start: dStr, className: t==='DISP'?'bg-disp':'bg-turno', allDay: true });
                 }
             }
         }
         return evs;
     }
 
-    function mostraStep(titolo, desc) { 
-        document.getElementById('stepTitle').innerText = titolo; 
-        document.getElementById('stepDesc').innerText = desc; 
-        document.getElementById('stepModal').style.display = 'block'; 
-    }
-    function formattaData(d) { return new Date(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); }
+    function mostraStep(titolo, desc) { document.getElementById('stepTitle').innerText = titolo; document.getElementById('stepDesc').innerText = desc; document.getElementById('stepModal').style.display = 'block'; }
+    function formattaDataTesto(d) { return new Date(d).toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
     function stringToNum(s) { let p = s.split('-'); return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000); }
     function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
     function chiudiEdit() { document.getElementById('editModal').style.display = 'none'; }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
-    function resetTotale() { if(confirm("Resettare?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Resettare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salvaLocal() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = document.querySelector(`#depotSelectMain option[value="${state.depositoAttivo}"]`)?.text || "Rotazione"; }
     function getOptionsTurni() {
