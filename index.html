@@ -33,6 +33,19 @@
         .bg-turno { background-color: var(--turno) !important; }
         .bg-modificato { background-color: #f5365c !important; }
 
+        /* Stile del Banner Disclaimer */
+        .disclaimer-banner {
+            margin: 15px 10px;
+            padding: 12px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 10px;
+            color: #856404;
+            font-size: 13px;
+            text-align: center;
+            font-style: italic;
+        }
+
         #welcomeModal, #stepModal, #editModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
 
@@ -101,6 +114,10 @@
 </div>
 
 <div id="calendar"></div>
+
+<div class="disclaimer-banner">
+    ⚠️ Questo è uno strumento non ufficiale che può presentare errori.
+</div>
 
 <script>
     const depositi = {
