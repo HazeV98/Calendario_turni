@@ -129,8 +129,8 @@
 
 <script>
     // --- CONFIGURAZIONE RAPIDA ---
-    const VERSIONE_TURNI = "1.0";
-    const ECCEZIONE_DOMENICA_6P = true; // Imposta su FALSE per disattivare (es. in estate)
+    const VERSIONE_TURNI = "1.01"; // Cambia questo numero per aggiornare la rotazione mantenendo i cambi manuali
+    const ECCEZIONE_DOMENICA_6P = true; 
 
     const depositi = {
         rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
@@ -147,9 +147,16 @@
     let selectedDate, tempTurnoIndex, tempRotDate, calendar;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // --- MODIFICA RICHIESTA: Reset intelligente (Mantiene variazioni) ---
         if (state.depositoAttivo && state.version !== VERSIONE_TURNI) {
-            alert("Turni aggiornati: l'app verrà resettata per caricare i nuovi dati.");
-            localStorage.removeItem('myTurniApp');
+            alert("L'ordine dei turni è stato aggiornato. I tuoi cambi turno manuali sono stati salvati, ma è necessario riconfigurare la rotazione base.");
+            state.depositoAttivo = null;
+            state.riposoStart = null;
+            state.rotazioneStart = null;
+            state.turnoIndex = null;
+            state.setupStep = 0;
+            state.version = VERSIONE_TURNI;
+            salvaLocal();
             location.reload();
             return;
         }
@@ -250,8 +257,6 @@
                     if (!(pJ === 6 || pJ === 13 || pJ === 14)) w++;
                 }
                 originale = turni[(state.turnoIndex + Math.floor(w/2)) % turni.length].toUpperCase();
-                
-                // Applica eccezione 6P anche nel calcolo dell'originale
                 let dObj = new Date(curr * 86400000);
                 if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && originale.startsWith("6P")) {
                     originale = "DISP";
@@ -306,12 +311,9 @@
                         if (!(pJ === 6 || pJ === 13 || pJ === 14)) w++;
                     }
                     let t = turni[(state.turnoIndex + Math.floor(w/2)) % turni.length].toUpperCase();
-                    
-                    // --- ECCEZIONE DOMENICA 6P ---
                     if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) {
                         t = "DISP";
                     }
-                    
                     evs.push({ title: t, start: dStr, className: t==='DISP'?'bg-disp':'bg-turno', allDay: true });
                 }
             }
@@ -326,7 +328,7 @@
     function chiudiEdit() { document.getElementById('editModal').style.display = 'none'; }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
-    function resetTotale() { if(confirm("Resettare tutto?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("ATTENZIONE: Questa azione cancellerà sia la rotazione che TUTTI i cambi turno manuali. Procedere?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function salvaLocal() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = document.querySelector(`#depotSelectMain option[value="${state.depositoAttivo}"]`)?.text || "Rotazione"; }
     function getOptionsTurni() {
