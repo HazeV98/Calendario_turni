@@ -43,9 +43,9 @@
         .bg-modificato { background-color: #f5365c !important; }
 
         .disclaimer-banner {
-            margin: 15px 10px; padding: 12px; background-color: #fff3cd;
-            border: 1px solid #ffeeba; border-radius: 10px; color: #856404;
-            font-size: 13px; text-align: center; font-style: italic;
+            margin: 15px 10px; padding: 15px; background-color: #fff3cd;
+            border: 1px solid #ffeeba; border-radius: 12px; color: #856404;
+            font-size: 13px; text-align: center; line-height: 1.4;
         }
 
         #welcomeModal, #stepModal, #editModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
@@ -124,12 +124,14 @@
 </div>
 
 <div id="calendar"></div>
-<div class="disclaimer-banner">⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.</div>
+
+<div class="disclaimer-banner">
+    Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
+</div>
 
 <script>
-    // --- CONFIGURAZIONE ---
-    const VERSIONE_TURNI = "1.01"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-02-25"; 
+    const VERSIONE_TURNI = "1.02"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-22"; 
     const ECCEZIONE_DOMENICA_6P = true; 
 
     const depositi = {
@@ -147,7 +149,7 @@
     let selectedDate, tempTurnoIndex, tempRotDate, calendar;
 
     document.addEventListener('DOMContentLoaded', function() {
-        const isSpecial = (state.depositoAttivo === 'disp_indet' || state.depositoAttivo === 'disp_det');
+        const isSpecial = (state.depositoAttivo && state.depositoAttivo.startsWith('disp_'));
         if (state.depositoAttivo && state.version !== VERSIONE_TURNI) {
             if (isSpecial) {
                 state.version = VERSIONE_TURNI; salvaLocal();
@@ -163,9 +165,6 @@
         document.getElementById('depotSelectMain').addEventListener('change', function() {
             document.getElementById('btnConfRot').disabled = false;
             document.getElementById('btnConfRot').style.background = 'var(--turno)';
-        });
-        document.getElementById('singleTurnoSelect').addEventListener('change', function() {
-            if(this.value !== "") document.getElementById('btnSalvaCambio').disabled = false;
         });
     });
 
@@ -201,7 +200,7 @@
 
     function procediConfigurazione() {
         state.riposoStart = selectedDate;
-        if (state.depositoAttivo === 'disp_indet' || state.depositoAttivo === 'disp_det') {
+        if (state.depositoAttivo.startsWith('disp_')) {
             state.setupStep = 3; salvaLocal(); location.reload();
         } else {
             state.setupStep = 2;
@@ -214,13 +213,15 @@
             document.getElementById('stepTitle').innerText = "Passo 3";
             document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
             document.getElementById('stepDesc').innerText = "Che turno hai in questo giorno?";
-            document.getElementById('stepActionArea').innerHTML = `<select id="tSel">${getOptionsTurni()}</select>`;
+            document.getElementById('stepActionArea').innerHTML = `<select id="tSel"><option value="" disabled selected>Seleziona turno...</option>${getOptionsTurni()}</select>`;
             document.getElementById('btnConfirmFinal').style.display = "block";
         }
     }
 
     function attivaRotazioneFinale() {
-        state.turnoIndex = parseInt(document.getElementById('tSel').value);
+        const val = document.getElementById('tSel').value;
+        if(!val) return;
+        state.turnoIndex = parseInt(val);
         state.rotazioneStart = tempRotDate;
         state.setupStep = 3; salvaLocal(); location.reload();
     }
@@ -259,24 +260,38 @@
         return evs;
     }
 
+    function getOptionsTurni() {
+        if(!depositi[state.depositoAttivo]) return "";
+        return depositi[state.depositoAttivo]
+            .map((n, i) => ({ n: n.toUpperCase(), i: i }))
+            .filter(x => x.n !== "DISP")
+            .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}))
+            .map(item => `<option value="${item.i}">${item.n}</option>`)
+            .join('');
+    }
+
     function formattaData(d) { return new Date(d).toLocaleDateString('it-IT', { day:'numeric', month:'long' }); }
     function stringToNum(s) { let p = s.split('-'); return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000); }
     function salvaLocal() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
     function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
     function chiudiEdit() { document.getElementById('editModal').style.display = 'none'; }
+    function mostraStep(titolo, desc) { document.getElementById('stepTitle').innerText = titolo; document.getElementById('stepDesc').innerText = desc; document.getElementById('stepModal').style.display = 'block'; }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
     function resetTotale() { if(confirm("Resettare tutto definitivamente?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = document.querySelector(`#depotSelectMain option[value="${state.depositoAttivo}"]`)?.text || "Configurazione"; }
-    function getOptionsTurni() { 
-        if(!depositi[state.depositoAttivo]) return "";
-        return depositi[state.depositoAttivo].map((n, i) => `<option value="${i}">${n.toUpperCase()}</option>`).join('');
-    }
+    
     function popolaCambio() {
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="" disabled selected>Cambia turno...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
+        let tutti = []; Object.values(depositi).forEach(list => list.forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }));
+        [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
+            let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
+        });
         document.getElementById('btnSalvaCambio').disabled = true;
+        s.onchange = () => { document.getElementById('btnSalvaCambio').disabled = false; };
     }
+
     function inizializzaCalendario() {
         calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth', locale: 'it', firstDay: 1, height: 'auto',
@@ -286,7 +301,6 @@
         });
         calendar.render();
     }
-    function mostraStep(titolo, desc) { document.getElementById('stepTitle').innerText = titolo; document.getElementById('stepDesc').innerText = desc; document.getElementById('stepModal').style.display = 'block'; }
 </script>
 </body>
 </html>
