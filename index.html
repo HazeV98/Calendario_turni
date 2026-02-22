@@ -26,12 +26,15 @@
 
         #calendar { background: white; padding: 2px; border-radius: 15px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
+        .fc .fc-toolbar-title { font-size: 1.2em !important; }
+        .fc .fc-button { padding: 5px 10px !important; font-size: 0.9em !important; }
+        .fc .fc-daygrid-day-frame { min-height: 80px !important; cursor: pointer; }
+        
         .fc-event { 
             border: none !important; padding: 6px 4px !important; 
             margin: 2px 0 !important; border-radius: 6px !important; 
             font-weight: 700 !important; font-size: 0.85em !important; 
             text-align: center; cursor: pointer !important;
-            pointer-events: auto !important;
         }
 
         .bg-riposo { background-color: var(--riposo) !important; }
@@ -39,14 +42,24 @@
         .bg-turno { background-color: var(--turno) !important; }
         .bg-modificato { background-color: #f5365c !important; }
 
+        .disclaimer-banner {
+            margin: 15px 10px; padding: 15px; background-color: #fff3cd;
+            border: 1px solid #ffeeba; border-radius: 12px; color: #856404;
+            font-size: 13px; text-align: center; line-height: 1.4;
+        }
+
         #welcomeModal, #stepModal, #editModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
 
-        select { width: 100%; margin: 15px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: white; }
+        select { width: 100%; margin: 15px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: white; -webkit-appearance: none; }
         .btn { padding: 16px; border: none; border-radius: 14px; color: white; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 15px; }
         .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 12px; }
         .instruction-text { font-size: 15px; line-height: 1.6; color: #525f7f; margin-bottom: 10px; }
         .deposito-tag { font-size: 10px; background: #eef2ff; color: var(--turno); padding: 4px 8px; border-radius: 5px; font-weight: bold; }
+
+        @media (max-width: 400px) {
+            .fc-event { font-size: 0.75em !important; padding: 4px 2px !important; }
+        }
     </style>
 </head>
 <body>
@@ -61,8 +74,8 @@
 
 <div id="welcomeModal">
     <div class="modal-content">
-        <h3 style="color: var(--turno); margin-top: 0;">Configurazione Rotazione</h3>
-        <p class="instruction-text">Scegli il tuo deposito o profilo:</p>
+        <h3 style="color: var(--turno); margin-top: 0;">Benvenuto</h3>
+        <p class="instruction-text">Scegli la tua rotazione:</p>
         <select id="depotSelectMain">
             <option value="" disabled selected>Scegli...</option>
             <optgroup label="Profili Disponibile">
@@ -93,14 +106,16 @@
         <div id="stepButtons">
             <button id="btnConfirmDate" class="btn" style="background: var(--riposo); display:none;" onclick="procediConfigurazione()">Sì, conferma data</button>
             <button id="btnConfirmFinal" class="btn" style="background: var(--riposo); display:none;" onclick="attivaRotazioneFinale()">Conferma e Attiva</button>
-            <button id="btnCloseStep" class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Chiudi</button>
+            <button id="btnIndietro" class="btn" style="background: #adb5bd; display:none;" onclick="tornaAlPasso1()">Indietro</button>
+            <button id="btnCloseStep" class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Seleziona sul calendario</button>
         </div>
     </div>
 </div>
 
 <div id="editModal">
     <div class="modal-content">
-        <h3 id="modalDate" style="margin-top:0;">Modifica Giorno</h3>
+        <h3 id="modalDate" style="margin-top:0;">Data</h3>
+        <div id="infoTurniArea" style="font-size:0.9em; margin-bottom:15px; padding:10px; background:#f8f9fa; border-radius:10px; text-align:left;"></div>
         <select id="singleTurnoSelect"></select>
         <button id="btnSalvaCambio" class="btn" style="background: #32325d" onclick="salvaCambioSingolo()" disabled>Salva Cambio</button>
         <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
@@ -110,10 +125,14 @@
 
 <div id="calendar"></div>
 
+<div class="disclaimer-banner">
+    Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
+</div>
+
 <script>
-    const VERSIONE_TURNI = "1.06";
-    const DATA_VALIDITA_NUOVI = "2026-02-21"; // Data in cui scatta la nuova rotazione
-    const ECCEZIONE_DOMENICA_6P = true;
+    const VERSIONE_TURNI = "1.1"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-25"; 
+    const ECCEZIONE_DOMENICA_6P = true; 
 
     const depositi = {
         rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
@@ -126,28 +145,24 @@
         spez_lido: ["5P24", "5P02", "5P08"]
     };
 
-    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { version: "0", variazioni: {} };
+    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { depositoAttivo: null, riposoStart: null, rotazioneStart: null, turnoIndex: null, variazioni: {}, setupStep: 0, version: VERSIONE_TURNI };
+    let selectedDate, tempTurnoIndex, tempRotDate, calendar;
 
     document.addEventListener('DOMContentLoaded', function() {
-        // RESET LOGICO: Chiede se aggiornare la rotazione mantenendo i cambi manuali
-        if (state.version !== VERSIONE_TURNI && state.depositoAttivo) {
-            if (confirm("È disponibile un aggiornamento dei turni (v" + VERSIONE_TURNI + "). Vuoi aggiornare la rotazione? I tuoi cambi manuali e i riposi verranno mantenuti.")) {
-                state.setupStep = 1; // Riporta alla scelta rotazione
-                state.version = VERSIONE_TURNI;
-                salvaLocal();
-                document.getElementById('welcomeModal').style.display = 'block';
+        const isSpecial = (state.depositoAttivo && state.depositoAttivo.startsWith('disp_'));
+        if (state.depositoAttivo && state.version !== VERSIONE_TURNI) {
+            if (isSpecial) {
+                state.version = VERSIONE_TURNI; salvaLocal();
+            } else {
+                alert("Aggiornamento turni richiesto.");
+                state.depositoAttivo = null; state.setupStep = 0; state.version = VERSIONE_TURNI;
+                salvaLocal(); location.reload(); return;
             }
         }
-
-        if(!state.depositoAttivo) {
-            document.getElementById('welcomeModal').style.display = 'block';
-        } else {
-            aggiornaUI();
-            inizializzaCalendario();
-            if (state.setupStep === 1) mostraGuidaPasso2();
-        }
+        if(!state.depositoAttivo) document.getElementById('welcomeModal').style.display = 'block';
+        else { aggiornaUI(); inizializzaCalendario(); checkGuida(); }
         
-        document.getElementById('depotSelectMain').addEventListener('change', () => {
+        document.getElementById('depotSelectMain').addEventListener('change', function() {
             document.getElementById('btnConfRot').disabled = false;
             document.getElementById('btnConfRot').style.background = 'var(--turno)';
         });
@@ -156,15 +171,18 @@
     function confermaRotazione() {
         state.depositoAttivo = document.getElementById('depotSelectMain').value;
         state.setupStep = 1;
+        state.version = VERSIONE_TURNI;
         document.getElementById('welcomeModal').style.display = 'none';
-        aggiornaUI(); inizializzaCalendario(); salvaLocal(); mostraGuidaPasso2();
+        aggiornaUI(); inizializzaCalendario(); salvaLocal(); checkGuida();
     }
 
-    function mostraGuidaPasso2() {
-        document.getElementById('stepTitle').innerText = "Passo 2";
-        document.getElementById('stepDesc').innerText = "Seleziona nel calendario uno dei tuoi riposi singoli";
-        document.getElementById('btnConfirmDate').style.display = "none";
-        document.getElementById('stepModal').style.display = 'block';
+    function checkGuida() {
+        if (state.setupStep === 1) {
+            mostraStep("Passo 2", "Seleziona nel calendario uno dei tuoi riposi singoli");
+            document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnIndietro').style.display = "none";
+            document.getElementById('btnCloseStep').style.display = "block";
+        }
     }
 
     function gestisciInterazione(date) {
@@ -174,7 +192,7 @@
             document.getElementById('stepDesc').innerText = "È un tuo giorno di riposo?";
             document.getElementById('btnConfirmDate').style.display = "block";
             document.getElementById('stepModal').style.display = 'block';
-        } else {
+        } else if (state.setupStep >= 3) {
             document.getElementById('modalDate').innerText = formattaData(date);
             popolaCambio();
             document.getElementById('editModal').style.display = 'block';
@@ -188,10 +206,14 @@
         } else {
             state.setupStep = 2;
             let d = new Date(selectedDate); d.setDate(d.getDate() + 1);
-            state.rotazioneStart = d.toISOString().split('T')[0];
+            let dStr = d.toISOString().split('T')[0];
+            while(state.variazioni[dStr] === "RIPOSO") { d.setDate(d.getDate() + 1); dStr = d.toISOString().split('T')[0]; }
+            tempRotDate = dStr;
             document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnIndietro').style.display = "block";
+            document.getElementById('btnCloseStep').style.display = "none";
             document.getElementById('stepTitle').innerText = "Passo 3";
-            document.getElementById('stepDateDisplay').innerText = formattaData(state.rotazioneStart);
+            document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
             document.getElementById('stepDesc').innerText = "Che turno hai in questo giorno?";
             document.getElementById('stepActionArea').innerHTML = `<select id="tSel"><option value="" disabled selected>Seleziona turno...</option>${getOptionsTurni()}</select>`;
             document.getElementById('btnConfirmFinal').style.display = "block";
@@ -202,6 +224,7 @@
         const val = document.getElementById('tSel').value;
         if(!val) return;
         state.turnoIndex = parseInt(val);
+        state.rotazioneStart = tempRotDate;
         state.setupStep = 3; salvaLocal(); location.reload();
     }
 
@@ -210,42 +233,50 @@
         let evs = [], ref = stringToNum(state.riposoStart);
         for (let i = -30; i < 300; i++) {
             let curr = ref + i, dObj = new Date(curr * 86400000), dStr = dObj.toISOString().split('T')[0];
-            
-            // PRIORITÀ AI CAMBI MANUALI (Vengono mantenuti)
             if (state.variazioni[dStr]) {
-                evs.push({ title: state.variazioni[dStr], start: dStr, className: state.variazioni[dStr]==='RIPOSO'?'bg-riposo':'bg-modificato', allDay: true });
+                let v = state.variazioni[dStr];
+                evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':'bg-modificato', allDay: true });
                 continue;
             }
             
-            let pos = ((i + 6) % 15 + 15) % 15;
-            let isR = (state.depositoAttivo === 'disp_det') ? (((curr - ref) % 6 + 6) % 6 === 0) : (pos === 6 || pos === 13 || pos === 14);
-            
+            let isR = false, t = "";
+            if (state.depositoAttivo === 'disp_det') {
+                isR = (((curr - ref) % 6 + 6) % 6 === 0);
+                if(!isR) t = "DISP";
+            } else {
+                let pos = ((i + 6) % 15 + 15) % 15;
+                isR = (pos === 6 || pos === 13 || pos === 14);
+                
+                if (!isR) {
+                    if (state.depositoAttivo === 'disp_indet') {
+                        t = "DISP";
+                    } 
+                    else if (state.rotazioneStart && curr >= stringToNum(state.rotazioneStart)) {
+                        let w = 0, rot = stringToNum(state.rotazioneStart);
+                        for (let j = rot; j < curr; j++) {
+                            let pJ = ((j - ref + 6) % 15 + 15) % 15;
+                            let jS = new Date(j * 86400000).toISOString().split('T')[0];
+                            if (!(pJ === 6 || pJ === 13 || pJ === 14) && state.variazioni[jS] !== "RIPOSO") w++;
+                        }
+                        t = depositi[state.depositoAttivo][(state.turnoIndex + Math.floor(w/2)) % depositi[state.depositoAttivo].length].toUpperCase();
+                        if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) t = "DISP";
+                    } else {
+                        t = ""; 
+                    }
+                }
+            }
+
             if (isR) {
                 evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
-            } else {
-                let t = "";
-                if (state.depositoAttivo.startsWith('disp_')) {
-                    t = "DISP";
-                } else if (state.rotazioneStart && curr >= stringToNum(state.rotazioneStart)) {
-                    let w = 0, rot = stringToNum(state.rotazioneStart);
-                    for (let j = rot; j < curr; j++) {
-                        let jPos = ((j - ref + 6) % 15 + 15) % 15;
-                        let jR = (state.depositoAttivo === 'disp_det') ? (((j - ref) % 6 + 6) % 6 === 0) : (jPos === 6 || jPos === 13 || jPos === 14);
-                        // Conta i lavorativi reali escludendo i riposi manuali
-                        if (!jR && state.variazioni[new Date(j * 86400000).toISOString().split('T')[0]] !== "RIPOSO") w++;
-                    }
-                    // Logica coppia corretta: w+1 permette al primo giorno di essere singolo se necessario
-                    let indexShift = Math.floor((w + 1) / 2);
-                    t = depositi[state.depositoAttivo][(state.turnoIndex + indexShift) % depositi[state.depositoAttivo].length].toUpperCase();
-                    if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) t = "DISP";
-                }
-                if (t !== "") evs.push({ title: t, start: dStr, className: (t==='DISP'?'bg-disp':'bg-turno'), allDay: true });
+            } else if (t !== "") {
+                evs.push({ title: t, start: dStr, className: (t==='DISP'?'bg-disp':'bg-turno'), allDay: true });
             }
         }
         return evs;
     }
 
     function getOptionsTurni() {
+        if(!depositi[state.depositoAttivo]) return "";
         return depositi[state.depositoAttivo]
             .map((n, i) => ({ n: n.toUpperCase(), i: i }))
             .filter(x => x.n !== "DISP")
@@ -259,14 +290,15 @@
     function salvaLocal() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
     function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
     function chiudiEdit() { document.getElementById('editModal').style.display = 'none'; }
+    function mostraStep(titolo, desc) { document.getElementById('stepTitle').innerText = titolo; document.getElementById('stepDesc').innerText = desc; document.getElementById('stepModal').style.display = 'block'; }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
-    function resetTotale() { if(confirm("Resettare tutto definitivamente (inclusi i tuoi cambi manuali)?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Resettare tutto definitivamente?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = document.querySelector(`#depotSelectMain option[value="${state.depositoAttivo}"]`)?.text || "Configurazione"; }
     
     function popolaCambio() {
         const s = document.getElementById('singleTurnoSelect');
-        s.innerHTML = '<option value="" disabled selected>Cambia...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
+        s.innerHTML = '<option value="" disabled selected>Cambia turno...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
         let tutti = []; Object.values(depositi).forEach(list => list.forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }));
         [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
             let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
@@ -280,7 +312,7 @@
             initialView: 'dayGridMonth', locale: 'it', firstDay: 1, height: 'auto',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: (i) => gestisciInterazione(i.dateStr),
-            eventClick: (info) => gestisciInterazione(info.event.startStr),
+            eventClick: (info) => gestisciInterazione(info.event.startStr), // AGGIUNTO: ora apre il modal anche premendo sul turno
             events: (i, success) => success(calcolaTurni())
         });
         calendar.render();
