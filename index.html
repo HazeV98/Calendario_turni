@@ -75,7 +75,7 @@
 <div id="welcomeModal">
     <div class="modal-content">
         <h3 style="color: var(--turno); margin-top: 0;">Aggiornamento Turni</h3>
-        <p class="instruction-text">È stata rilevata una nuova versione. La rotazione verrà ricalcolata dalla data di validità, mantenendo i tuoi cambi manuali.</p>
+        <p class="instruction-text">È stata rilevata una nuova versione. La rotazione verrà ricalcolata dalla data di validità, mantenendo i tuoi cambi manuali e riposi.</p>
         <button id="btnAvviaAggiornamento" class="btn" style="background: var(--turno)" onclick="avviaRiconfigurazione()">Configura Nuova Rotazione</button>
     </div>
 </div>
@@ -108,11 +108,11 @@
 <div id="calendar"></div>
 
 <div class="disclaimer-banner">
-    ⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
+    Questo è uno strumento non ufficiale. Verificare sempre i turni ufficiali.
 </div>
 
 <script>
-    const VERSIONE_TURNI = "1.6"; 
+    const VERSIONE_TURNI = "1.8.1"; 
     const DATA_INIZIO_NUOVI_TURNI = "2026-02-25"; 
     const ECCEZIONE_DOMENICA_6P = true; 
 
@@ -134,8 +134,9 @@
         if (state.depositoAttivo && state.version !== VERSIONE_TURNI) {
             document.getElementById('welcomeModal').style.display = 'block';
         } else if (!state.depositoAttivo) {
-            // Se prima installazione, usa il vecchio modal o logica di setup
-            avviaRiconfigurazione();
+            // Setup iniziale se mancano dati
+            state.depositoAttivo = "rot_fnove"; 
+            salvaLocal();
         } else {
             aggiornaUI(); inizializzaCalendario();
         }
@@ -143,15 +144,9 @@
 
     function avviaRiconfigurazione() {
         document.getElementById('welcomeModal').style.display = 'none';
-        // Se non c'è un deposito, lo chiede, altrimenti passa subito a chiedere il turno
-        if (!state.depositoAttivo) {
-            state.depositoAttivo = "rot_fnove"; // Default o logica di scelta
-        }
-        
         let d = new Date(DATA_INIZIO_NUOVI_TURNI);
         let dStr = d.toISOString().split('T')[0];
         
-        // Trova il primo giorno utile se la data di inizio è un riposo (manuale o calcolato)
         while(isGiornoRiposo(dStr)) {
             d.setDate(d.getDate() + 1);
             dStr = d.toISOString().split('T')[0];
@@ -215,17 +210,6 @@
                         if (!(pJ === 6 || pJ === 13 || pJ === 14) && state.variazioni[jS] !== "RIPOSO") w++;
                     }
 
-                    // Logica dei due turni: gestisce l'inserimento su giorni pari del ciclo (2, 4, 6)
-                    // Se w è dispari, significa che siamo nel secondo giorno della coppia
-                    let posRelativaLavorativi = 0;
-                    let countLav = 0;
-                    for(let k=rot; k<=curr; k++){
-                         let pK = ((k - ref + 6) % 15 + 15) % 15;
-                         if(!(pK === 6 || pK === 13 || pK === 14)) countLav++;
-                    }
-                    
-                    // Se il giorno di inizio rotazione era un "secondo giorno" del blocco lavorativo (es. pos 1, 3, 5)
-                    // compensiamo per non sdoppiare il turno inserito.
                     let startPos = ((stringToNum(state.rotazioneStart) - ref + 6) % 15 + 15) % 15;
                     let offsetCompensazione = (startPos === 1 || startPos === 3 || startPos === 5) ? 1 : 0;
                     
@@ -253,9 +237,24 @@
     function salvaLocal() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
     function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
     function chiudiEdit() { document.getElementById('editModal').style.display = 'none'; }
+    function gestisciInterazione(date) {
+        selectedDate = date;
+        document.getElementById('modalDate').innerText = formattaData(date);
+        popolaCambio();
+        document.getElementById('editModal').style.display = 'block';
+    }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
-    function resetTotale() { if(confirm("Resettare tutto definitivamente?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    
+    function resetTotale() { 
+        if(confirm("ATTENZIONE! Questa operazione cancellerà DEFINITIVAMENTE tutti i tuoi dati, i turni salvati e le personalizzazioni.")) { 
+            if(confirm("Sei veramente sicuro? Non potrai tornare indietro.")) {
+                localStorage.removeItem('myTurniApp'); 
+                location.reload(); 
+            }
+        } 
+    }
+
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = state.depositoAttivo || "Configurazione"; }
     
     function popolaCambio() {
