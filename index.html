@@ -124,12 +124,12 @@
 <div id="calendar"></div>
 
 <div class="disclaimer-banner">
-    Questo è uno Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.⚠️ 
+    ⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
 </div>
 
 <script>
-    const VERSIONE_TURNI = "1.8.3"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-02-21"; 
+    const VERSIONE_TURNI = "1.8.4"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-25"; 
     const ECCEZIONE_DOMENICA_6P = true; 
 
     const depositi = {
@@ -148,14 +148,11 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         if (!state.depositoAttivo) {
-            // NUOVO UTENTE O DOPO RESET
             document.getElementById('welcomeTitle').innerText = "Benvenuto";
-            document.getElementById('welcomeDesc').innerText = "Scegli la tua rotazione:";
             document.getElementById('welcomeModal').style.display = 'block';
         } else if (state.version !== VERSIONE_TURNI) {
-            // UTENTE CHE DEVE AGGIORNARE
             document.getElementById('welcomeTitle').innerText = "Aggiornamento Turni";
-            document.getElementById('welcomeDesc').innerText = "Rilevata nuova versione. La rotazione verrà ricalcolata dalla data di validità mantenendo i tuoi cambi.";
+            document.getElementById('welcomeDesc').innerText = "Rilevata nuova versione. La rotazione verrà ricalcolata mantenendo i tuoi cambi.";
             document.getElementById('depotSelectMain').style.display = 'none';
             document.getElementById('btnConfRot').disabled = false;
             document.getElementById('btnConfRot').style.background = 'var(--turno)';
@@ -180,10 +177,8 @@
         document.getElementById('welcomeModal').style.display = 'none';
         
         if (!state.riposoStart) {
-            // Se è la prima volta in assoluto, inizializza calendario e guida
             aggiornaUI(); inizializzaCalendario(); checkGuida(); salvaLocal();
         } else {
-            // Se è un aggiornamento, vai direttamente a chiedere il turno nuovo
             avviaRiconfigurazioneAggiornamento();
         }
     }
@@ -193,7 +188,6 @@
             document.getElementById('stepTitle').innerText = "Passo 2";
             document.getElementById('stepDesc').innerText = "Seleziona nel calendario uno dei tuoi riposi singoli";
             document.getElementById('btnConfirmDate').style.display = "none";
-            document.getElementById('btnConfirmFinal').style.display = "none";
             document.getElementById('stepModal').style.display = 'block';
         }
     }
@@ -205,8 +199,8 @@
             document.getElementById('stepDesc').innerText = "È un tuo giorno di riposo?";
             document.getElementById('btnConfirmDate').style.display = "block";
             document.getElementById('stepModal').style.display = 'block';
-        } else if (state.setupStep >= 3) {
-            document.getElementById('modalDate').innerText = formattaData(date);uh
+        } else {
+            document.getElementById('modalDate').innerText = formattaData(date);
             popolaCambio();
             document.getElementById('editModal').style.display = 'block';
         }
@@ -241,7 +235,6 @@
         document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
         document.getElementById('stepDesc').innerText = "Indica il turno per l'inizio della nuova rotazione:";
         document.getElementById('stepActionArea').innerHTML = `<select id="tSel"><option value="" disabled selected>Seleziona turno...</option>${getOptionsTurni()}</select>`;
-        document.getElementById('btnConfirmDate').style.display = "none";
         document.getElementById('btnConfirmFinal').style.display = "block";
         document.getElementById('stepModal').style.display = 'block';
     }
@@ -283,10 +276,14 @@
                     let w = 0, rot = stringToNum(state.rotazioneStart);
                     for (let j = rot; j < curr; j++) {
                         let pJ = ((j - ref + 6) % 15 + 15) % 15;
-                        if (!(pJ === 6 || pJ === 13 || pJ === 14) && state.variazioni[new Date(j * 86400000).toISOString().split('T')[0]] !== "RIPOSO") w++;
+                        // Conta i giorni lavorativi teorici della rotazione
+                        if (!(pJ === 6 || pJ === 13 || pJ === 14)) w++;
                     }
                     let startPos = ((stringToNum(state.rotazioneStart) - ref + 6) % 15 + 15) % 15;
-                    let offsetCompensazione = (startPos === 1 || startPos === 3 || startPos === 5) ? 1 : 0;
+                    // Correzione: Tutte le posizioni dispari (seconde del blocco) attivano l'offset
+                    const secondiGiorni = [1, 3, 5, 8, 10, 12];
+                    let offsetCompensazione = secondiGiorni.includes(startPos) ? 1 : 0;
+                    
                     t = depositi[state.depositoAttivo][(state.turnoIndex + Math.floor((w + offsetCompensazione)/2)) % depositi[state.depositoAttivo].length].toUpperCase();
                     if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) t = "DISP";
                 }
@@ -308,7 +305,7 @@
     function chiudiEdit() { document.getElementById('editModal').style.display = 'none'; }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
-    function resetTotale() { if(confirm("Cancellare DEFINITIVAMENTE tutti i dati?")) { localStorage.removeItem('myTurniApp'); location.reload(); } }
+    function resetTotale() { if(confirm("Cancellare DEFINITIVAMENTE tutti i dati?")) { if(confirm("Sicuro al 100%?")) { localStorage.removeItem('myTurniApp'); location.reload(); } } }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = state.depositoAttivo || "Configurazione"; }
     
     function popolaCambio() {
@@ -335,4 +332,3 @@
 </script>
 </body>
 </html>
-
