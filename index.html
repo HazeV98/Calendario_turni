@@ -126,12 +126,12 @@
 <div id="calendar"></div>
 
 <div class="disclaimer-banner">
-    Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
+    ⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
 </div>
 
 <script>
     const VERSIONE_TURNI = "1.02"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-02-22"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-25"; 
     const ECCEZIONE_DOMENICA_6P = true; 
 
     const depositi = {
@@ -178,9 +178,10 @@
 
     function checkGuida() {
         if (state.setupStep === 1) {
-            mostraStep("Passo 2", "Seleziona sul calendario la data di un tuo RIPOSO");
+            mostraStep("Passo 2", "Seleziona nel calendario uno dei tuoi riposi singoli");
             document.getElementById('btnConfirmDate').style.display = "none";
             document.getElementById('btnIndietro').style.display = "none";
+            document.getElementById('btnCloseStep').style.display = "block";
         }
     }
 
@@ -210,6 +211,7 @@
             tempRotDate = dStr;
             document.getElementById('btnConfirmDate').style.display = "none";
             document.getElementById('btnIndietro').style.display = "block";
+            document.getElementById('btnCloseStep').style.display = "none"; // Tolgo tasto seleziona che blocca
             document.getElementById('stepTitle').innerText = "Passo 3";
             document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
             document.getElementById('stepDesc').innerText = "Che turno hai in questo giorno?";
@@ -236,14 +238,22 @@
                 evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':'bg-modificato', allDay: true });
                 continue;
             }
-            let isR = false, t = "DISP";
+            
+            let isR = false, t = "";
             if (state.depositoAttivo === 'disp_det') {
                 isR = (((curr - ref) % 6 + 6) % 6 === 0);
+                if(!isR) t = "DISP";
             } else {
                 let pos = ((i + 6) % 15 + 15) % 15;
                 isR = (pos === 6 || pos === 13 || pos === 14);
-                if (!isR && !state.depositoAttivo.startsWith('disp_')) {
-                    if (state.rotazioneStart && curr >= stringToNum(state.rotazioneStart)) {
+                
+                if (!isR) {
+                    // Se è speciale 6-2-6-1 mette sempre DISP
+                    if (state.depositoAttivo === 'disp_indet') {
+                        t = "DISP";
+                    } 
+                    // Se è rotazione normale, mette DISP solo se siamo dopo la data di aggancio
+                    else if (state.rotazioneStart && curr >= stringToNum(state.rotazioneStart)) {
                         let w = 0, rot = stringToNum(state.rotazioneStart);
                         for (let j = rot; j < curr; j++) {
                             let pJ = ((j - ref + 6) % 15 + 15) % 15;
@@ -252,10 +262,17 @@
                         }
                         t = depositi[state.depositoAttivo][(state.turnoIndex + Math.floor(w/2)) % depositi[state.depositoAttivo].length].toUpperCase();
                         if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) t = "DISP";
+                    } else {
+                        t = ""; // Lascia vuoto se prima della rotazione
                     }
                 }
             }
-            evs.push({ title: isR ? 'RIPOSO' : t, start: dStr, className: isR ? 'bg-riposo' : (t==='DISP'?'bg-disp':'bg-turno'), allDay: true });
+
+            if (isR) {
+                evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
+            } else if (t !== "") {
+                evs.push({ title: t, start: dStr, className: (t==='DISP'?'bg-disp':'bg-turno'), allDay: true });
+            }
         }
         return evs;
     }
