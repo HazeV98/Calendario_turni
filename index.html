@@ -75,7 +75,7 @@
 <div id="welcomeModal">
     <div class="modal-content">
         <h3 style="color: var(--turno); margin-top: 0;">Benvenuto</h3>
-        <p class="instruction-text">Seleziona la tua rotazione:</p>
+        <p class="instruction-text">Scegli la tua rotazione:</p>
         <select id="depotSelectMain">
             <option value="" disabled selected>Scegli...</option>
             <optgroup label="Profili Disponibile">
@@ -127,8 +127,9 @@
 <div class="disclaimer-banner">⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.</div>
 
 <script>
+    // --- CONFIGURAZIONE ---
     const VERSIONE_TURNI = "1.01"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-02-22"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-25"; 
     const ECCEZIONE_DOMENICA_6P = true; 
 
     const depositi = {
@@ -178,7 +179,7 @@
 
     function checkGuida() {
         if (state.setupStep === 1) {
-            mostraStep("Passo 2", "Seleziona sul calendario la data di un tuo RIPOSO (dal " + DATA_INIZIO_NUOVI_TURNI + ")");
+            mostraStep("Passo 2", "Seleziona sul calendario la data di un tuo RIPOSO");
             document.getElementById('btnConfirmDate').style.display = "none";
             document.getElementById('btnIndietro').style.display = "none";
         }
