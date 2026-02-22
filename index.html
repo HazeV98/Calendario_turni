@@ -75,12 +75,12 @@
 <div id="welcomeModal">
     <div class="modal-content">
         <h3 style="color: var(--turno); margin-top: 0;">Benvenuto</h3>
-        <p class="instruction-text">Seleziona il tuo profilo lavorativo:</p>
+        <p class="instruction-text">Seleziona la tua rotazione:</p>
         <select id="depotSelectMain">
             <option value="" disabled selected>Scegli...</option>
-            <optgroup label="Disponibili Speciali">
-                <option value="disp_indet">Disp. 6-2-6-1 (Indeterminato)</option>
-                <option value="disp_det">Disp. 5-1 (Determinato)</option>
+            <optgroup label="Profili Disponibile">
+                <option value="disp_indet">Disponibile 6-2-6-1</option>
+                <option value="disp_det">Disponibile 5-1</option>
             </optgroup>
             <optgroup label="Rotazioni Standard">
                 <option value="rot_fnove">Rotazione F.Nove</option>
@@ -124,12 +124,11 @@
 </div>
 
 <div id="calendar"></div>
-
 <div class="disclaimer-banner">⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.</div>
 
 <script>
     const VERSIONE_TURNI = "1.01"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-02-25"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-22"; 
     const ECCEZIONE_DOMENICA_6P = true; 
 
     const depositi = {
@@ -147,23 +146,16 @@
     let selectedDate, tempTurnoIndex, tempRotDate, calendar;
 
     document.addEventListener('DOMContentLoaded', function() {
-        // --- LOGICA ESENZIONE RESET ---
         const isSpecial = (state.depositoAttivo === 'disp_indet' || state.depositoAttivo === 'disp_det');
-        
         if (state.depositoAttivo && state.version !== VERSIONE_TURNI) {
             if (isSpecial) {
-                // Se è speciale, aggiorna solo la versione senza chiedere nulla
-                state.version = VERSIONE_TURNI;
-                salvaLocal();
+                state.version = VERSIONE_TURNI; salvaLocal();
             } else {
-                // Altrimenti resetta per riconfigurazione
                 alert("Aggiornamento turni richiesto.");
-                state.depositoAttivo = null; state.setupStep = 0;
-                state.version = VERSIONE_TURNI;
+                state.depositoAttivo = null; state.setupStep = 0; state.version = VERSIONE_TURNI;
                 salvaLocal(); location.reload(); return;
             }
         }
-
         if(!state.depositoAttivo) document.getElementById('welcomeModal').style.display = 'block';
         else { aggiornaUI(); inizializzaCalendario(); checkGuida(); }
         
@@ -171,7 +163,6 @@
             document.getElementById('btnConfRot').disabled = false;
             document.getElementById('btnConfRot').style.background = 'var(--turno)';
         });
-        
         document.getElementById('singleTurnoSelect').addEventListener('change', function() {
             if(this.value !== "") document.getElementById('btnSalvaCambio').disabled = false;
         });
@@ -210,7 +201,6 @@
     function procediConfigurazione() {
         state.riposoStart = selectedDate;
         if (state.depositoAttivo === 'disp_indet' || state.depositoAttivo === 'disp_det') {
-            // Per le rotazioni disponibili non serve il passo 3 (turno iniziale)
             state.setupStep = 3; salvaLocal(); location.reload();
         } else {
             state.setupStep = 2;
@@ -244,7 +234,6 @@
                 evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':'bg-modificato', allDay: true });
                 continue;
             }
-            
             let isR = false, t = "DISP";
             if (state.depositoAttivo === 'disp_det') {
                 isR = (((curr - ref) % 6 + 6) % 6 === 0);
@@ -296,6 +285,7 @@
         });
         calendar.render();
     }
+    function mostraStep(titolo, desc) { document.getElementById('stepTitle').innerText = titolo; document.getElementById('stepDesc').innerText = desc; document.getElementById('stepModal').style.display = 'block'; }
 </script>
 </body>
 </html>
