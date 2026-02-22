@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="theme-color" content="#f7f9fe">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Turni">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    
     <title>Calendario Turni</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
@@ -48,7 +56,8 @@
             font-size: 13px; text-align: center; line-height: 1.4;
         }
 
-        #welcomeModal, #stepModal, #editModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        /* Aggiunti resetModal e backupModal all'elenco dei popup nascosti */
+        #welcomeModal, #stepModal, #editModal, #resetModal, #backupModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
 
         select { width: 100%; margin: 15px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: white; -webkit-appearance: none; }
@@ -69,7 +78,30 @@
         <h2 style="margin:0; font-size: 18px;">Gestione Turni</h2>
         <span id="activeDepotLabel" class="deposito-tag">In attesa...</span>
     </div>
-    <button class="btn btn-reset" onclick="resetTotale()">RESET</button>
+    <div>
+        <button class="btn btn-reset" style="background: #adb5bd; margin-right: 5px;" onclick="apriBackup()">BACKUP</button>
+        <button class="btn btn-reset" onclick="apriReset()">RESET</button>
+    </div>
+</div>
+
+<div id="resetModal">
+    <div class="modal-content">
+        <h3 style="color: #f5365c; margin-top: 0;">Attenzione!</h3>
+        <p class="instruction-text">Vuoi cancellare DEFINITIVAMENTE tutti i dati e i turni salvati?</p>
+        <button class="btn" style="background: #f5365c;" onclick="confermaReset()">Sì, cancella tutto</button>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiReset()">Annulla</button>
+    </div>
+</div>
+
+<div id="backupModal">
+    <div class="modal-content">
+        <h3 style="color: var(--turno); margin-top: 0;">Backup Dati</h3>
+        <p class="instruction-text" style="font-size: 13px;">Copia il testo qui sotto per esportare, o incollane uno per importare.</p>
+        <textarea id="backupText" style="width: 100%; height: 80px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; padding: 8px; font-size: 12px; box-sizing: border-box;"></textarea>
+        <button class="btn" style="background: var(--turno);" onclick="esportaDati()">Copia (Esporta)</button>
+        <button class="btn" style="background: var(--riposo);" onclick="importaDati()">Salva (Importa)</button>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiBackup()">Chiudi</button>
+    </div>
 </div>
 
 <div id="welcomeModal">
@@ -124,7 +156,7 @@
 <div id="calendar"></div>
 
 <div class="disclaimer-banner">
-    ⚠️Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi. 
+    Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.⚠️
 </div>
 
 <script>
@@ -339,9 +371,45 @@
     function chiudiEdit() { document.getElementById('editModal').style.display = 'none'; }
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
-    function resetTotale() { if(confirm("Cancellare DEFINITIVAMENTE tutti i dati?")) { if(confirm("Sicuro al 100%?")) { localStorage.removeItem('myTurniApp'); location.reload(); } } }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = state.depositoAttivo || "Configurazione"; }
     
+    /* NUOVE FUNZIONI PER RESET E BACKUP */
+    function apriReset() { document.getElementById('resetModal').style.display = 'block'; }
+    function chiudiReset() { document.getElementById('resetModal').style.display = 'none'; }
+    function confermaReset() { localStorage.removeItem('myTurniApp'); location.reload(); }
+
+    function apriBackup() { 
+        document.getElementById('backupModal').style.display = 'block'; 
+        document.getElementById('backupText').value = ''; 
+    }
+    function chiudiBackup() { document.getElementById('backupModal').style.display = 'none'; }
+    
+    function esportaDati() {
+        const data = localStorage.getItem('myTurniApp');
+        if(data) {
+            const txtArea = document.getElementById('backupText');
+            txtArea.value = data;
+            txtArea.select();
+            document.execCommand('copy');
+            alert("Dati copiati! Incolla il testo dove vuoi per salvarlo.");
+        } else {
+            alert("Nessun dato salvato da esportare.");
+        }
+    }
+    
+    function importaDati() {
+        const text = document.getElementById('backupText').value;
+        if(!text) { alert("Incolla i dati nel riquadro prima di cliccare Importa."); return; }
+        try {
+            JSON.parse(text); 
+            localStorage.setItem('myTurniApp', text);
+            alert("Dati ripristinati con successo!");
+            location.reload();
+        } catch(e) {
+            alert("Errore: Il testo incollato non è un salvataggio valido.");
+        }
+    }
+
     function popolaCambio() {
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="" disabled selected>Cambia...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
@@ -366,6 +434,3 @@
 </script>
 </body>
 </html>
-
-
-
