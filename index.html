@@ -56,7 +56,6 @@
             font-size: 13px; text-align: center; line-height: 1.4;
         }
 
-        /* Aggiunti resetModal e backupModal all'elenco dei popup nascosti */
         #welcomeModal, #stepModal, #editModal, #resetModal, #backupModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
 
@@ -146,6 +145,7 @@
 <div id="editModal">
     <div class="modal-content">
         <h3 id="modalDate" style="margin-top:0;">Data</h3>
+        <div id="infoTurniArea" style="font-size:0.9em; margin-bottom:15px; padding:10px; background:#f8f9fa; border-radius:10px; text-align:left; color:#525f7f; display:none;"></div>
         <select id="singleTurnoSelect"></select>
         <button id="btnSalvaCambio" class="btn" style="background: #32325d" onclick="salvaCambioSingolo()" disabled>Salva Cambio</button>
         <button class="btn" style="background: #adb5bd;" onclick="resetGiornoSingolo()">Ripristina Originale</button>
@@ -226,6 +226,7 @@
             document.getElementById('stepTitle').innerText = "Passo 2";
             document.getElementById('stepDesc').innerText = "Seleziona nel calendario uno dei tuoi riposi singoli";
             document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnCloseStep').innerText = "Seleziona";
             document.getElementById('stepModal').style.display = 'block';
         }
     }
@@ -236,9 +237,33 @@
             document.getElementById('stepDateDisplay').innerText = formattaData(date);
             document.getElementById('stepDesc').innerText = "È un tuo giorno di riposo?";
             document.getElementById('btnConfirmDate').style.display = "block";
+            document.getElementById('btnCloseStep').innerText = "Chiudi";
             document.getElementById('stepModal').style.display = 'block';
         } else {
             document.getElementById('modalDate').innerText = formattaData(date);
+            
+            // Gestione Info Turni
+            let infoArea = document.getElementById('infoTurniArea');
+            let turniCalc = calcolaTurni();
+            let turnoCorrenteObj = turniCalc.find(e => e.start === date);
+            let nomeTurno = turnoCorrenteObj ? turnoCorrenteObj.title : "Nessun turno";
+            
+            if (state.variazioni[date]) {
+                let tempVariazioni = {...state.variazioni};
+                delete state.variazioni[date];
+                let turniOriginali = calcolaTurni();
+                state.variazioni = tempVariazioni;
+                
+                let turnoOriginaleObj = turniOriginali.find(e => e.start === date);
+                let nomeOriginale = turnoOriginaleObj ? turnoOriginaleObj.title : "Nessun turno";
+                
+                infoArea.innerHTML = `<strong>Turno attuale:</strong> ${nomeTurno} (Modificato)<br><strong>Turno originale:</strong> ${nomeOriginale}`;
+                infoArea.style.display = "block";
+            } else {
+                infoArea.innerHTML = `<strong>Turno attuale:</strong> ${nomeTurno}`;
+                infoArea.style.display = "block";
+            }
+
             popolaCambio();
             document.getElementById('editModal').style.display = 'block';
         }
@@ -253,6 +278,7 @@
             let d = new Date(selectedDate); d.setDate(d.getDate() + 1);
             tempRotDate = d.toISOString().split('T')[0];
             document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnCloseStep').innerText = "Chiudi";
             document.getElementById('stepTitle').innerText = "Passo 3";
             document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
             document.getElementById('stepDesc').innerText = "Che turno hai in questo giorno?";
@@ -273,6 +299,7 @@
         document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
         document.getElementById('stepDesc').innerText = "Indica il turno per l'inizio della nuova rotazione:";
         document.getElementById('stepActionArea').innerHTML = `<select id="tSel"><option value="" disabled selected>Seleziona turno...</option>${getOptionsTurni()}</select>`;
+        document.getElementById('btnCloseStep').innerText = "Chiudi";
         document.getElementById('btnConfirmFinal').style.display = "block";
         document.getElementById('stepModal').style.display = 'block';
     }
@@ -364,7 +391,12 @@
             .map(item => `<option value="${item.i}">${item.n}</option>`).join('');
     }
 
-    function formattaData(d) { return new Date(d).toLocaleDateString('it-IT', { day:'numeric', month:'long' }); }
+    function formattaData(d) { 
+        let dataObj = new Date(d);
+        let mese = dataObj.toLocaleDateString('it-IT', { month: 'long' });
+        return dataObj.getDate() + ' ' + mese.charAt(0).toUpperCase() + mese.slice(1);
+    }
+    
     function stringToNum(s) { let p = s.split('-'); return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000); }
     function salvaLocal() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
     function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
@@ -373,7 +405,7 @@
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = state.depositoAttivo || "Configurazione"; }
     
-    /* NUOVE FUNZIONI PER RESET E BACKUP */
+    /* FUNZIONI PER RESET E BACKUP */
     function apriReset() { document.getElementById('resetModal').style.display = 'block'; }
     function chiudiReset() { document.getElementById('resetModal').style.display = 'none'; }
     function confermaReset() { localStorage.removeItem('myTurniApp'); location.reload(); }
@@ -434,4 +466,3 @@
 </script>
 </body>
 </html>
-
