@@ -379,7 +379,6 @@
         if (!state.riposoStart) return [];
         let evs = [], ref = stringToNum(state.riposoStart);
         
-        // Verifica di sicurezza: se i depositi non sono stati caricati non calcola
         if (Object.keys(depositi).length === 0 && !state.depositoAttivo.startsWith('disp_')) return evs;
 
         for (let i = -30; i < 300; i++) {
@@ -415,10 +414,27 @@
     }
 
     function getOptionsTurni() {
-        if (!depositi[state.depositoAttivo]) return ""; // Sicurezza se i dati non sono pronti
-        return depositi[state.depositoAttivo].map((n, i) => ({ n: n.toUpperCase(), i: i }))
+        if (!depositi[state.depositoAttivo]) return ""; 
+        
+        let htmlDisp = "";
+        let htmlTurni = "";
+        let dispAggiunto = false;
+
+        depositi[state.depositoAttivo]
+            .map((n, i) => ({ n: n.toUpperCase(), i: i }))
             .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}))
-            .map(item => `<option value="${item.i}">${item.n}</option>`).join('');
+            .forEach(item => {
+                if (item.n === "DISP") {
+                    if (!dispAggiunto) {
+                        htmlDisp = `<option value="${item.i}">DISP</option>`;
+                        dispAggiunto = true;
+                    }
+                } else {
+                    htmlTurni += `<option value="${item.i}">${item.n}</option>`;
+                }
+            });
+
+        return htmlDisp + htmlTurni;
     }
 
     function formattaData(d) { 
@@ -478,7 +494,7 @@
     function popolaCambio() {
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="" disabled selected>Cambia...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
-        if(Object.keys(depositi).length === 0) return; // Se JSON non è ancora caricato
+        if(Object.keys(depositi).length === 0) return; 
         
         let tutti = []; Object.values(depositi).forEach(list => list.forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }));
         [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
