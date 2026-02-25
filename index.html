@@ -160,8 +160,9 @@
 </div>
 
 <script>
-    const VERSIONE_TURNI = "1.0.2"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-03-01"; 
+    // --- PARAMETRI DI CONFIGURAZIONE GLOBALE ---
+    const VERSIONE_TURNI = "1.0"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-03-01"; // <--- Cambia questa data per i futuri aggiornamenti
     const ECCEZIONE_DOMENICA_6P = true; 
     
     const RESET_DOPO_AGGIORNAMENTO = {
@@ -194,8 +195,16 @@
                 state.version = VERSIONE_TURNI; salvaLocal();
                 aggiornaUI(); inizializzaCalendario();
             } else {
+                // Calcolo dinamico delle date per il messaggio di avviso
+                const dataLimiteObj = new Date(DATA_INIZIO_NUOVI_TURNI);
+                const dataMenoUnoObj = new Date(dataLimiteObj);
+                dataMenoUnoObj.setDate(dataMenoUnoObj.getDate() - 1);
+                
+                const strLimite = formattaData(DATA_INIZIO_NUOVI_TURNI);
+                const strMenoUno = formattaData(dataMenoUnoObj.toISOString().split('T')[0]);
+
                 document.getElementById('welcomeTitle').innerText = "Aggiornamento Turni";
-                document.getElementById('welcomeDesc').innerText = "Il calendario rimarrà invariato fino al 05 Febbraio. Dal 06 Febbraio inizierà la nuova rotazione.";
+                document.getElementById('welcomeDesc').innerText = `Il calendario rimarrà invariato fino al ${strMenoUno}. Dal ${strLimite} inizierà la nuova rotazione.`;
                 document.getElementById('depotSelectMain').style.display = 'none';
                 document.getElementById('btnConfRot').disabled = false;
                 document.getElementById('btnConfRot').style.background = 'var(--turno)';
@@ -217,12 +226,13 @@
             state.depositoAttivo = document.getElementById('depotSelectMain').value;
             state.setupStep = 1;
         } else if (state.version !== VERSIONE_TURNI) {
-            // Backup della configurazione attuale prima di sovrascriverla
+            // Salvataggio configurazione attuale nello storico
             state.history = {
                 riposoStart: state.riposoStart,
                 rotazioneStart: state.rotazioneStart,
                 turnoIndex: state.turnoIndex,
-                depositoAttivo: state.depositoAttivo
+                depositoAttivo: state.depositoAttivo,
+                threshold: DATA_INIZIO_NUOVI_TURNI // Memorizza la data che ha attivato questo storico
             };
         }
         state.version = VERSIONE_TURNI;
@@ -311,7 +321,7 @@
     function isGiornoRiposo(dStr) {
         if (state.variazioni[dStr] === "RIPOSO") return true;
         
-        // Sceglie la config in base alla data
+        // Determina dinamicamente se la data appartiene allo storico o al presente
         let cfg = (state.history && stringToNum(dStr) < stringToNum(DATA_INIZIO_NUOVI_TURNI)) ? state.history : state;
         if (!cfg.riposoStart) return false;
 
@@ -348,14 +358,14 @@
         for (let i = -60; i < 300; i++) {
             let curr = todayNum + i, dObj = new Date(curr * 86400000), dStr = dObj.toISOString().split('T')[0];
             
-            // 1. Priorità assoluta ai cambi manuali salvati dall'utente
+            // Priorità ai cambi manuali
             if (state.variazioni[dStr]) {
                 let v = state.variazioni[dStr];
                 evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':'bg-modificato', allDay: true });
                 continue;
             }
 
-            // 2. Identifica quale configurazione usare per questo giorno
+            // Selezione dinamica della configurazione basata sulla costante DATA_INIZIO_NUOVI_TURNI
             let isPast = (state.history && curr < stringToNum(DATA_INIZIO_NUOVI_TURNI));
             let cfg = isPast ? state.history : state;
 
@@ -454,4 +464,3 @@
 </script>
 </body>
 </html>
-
