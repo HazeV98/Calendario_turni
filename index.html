@@ -113,7 +113,7 @@
                 <option value="disp_indet">Disponibile 6-2-6-1</option>
                 <option value="disp_det">Disponibile 5-1</option>
             </optgroup>
-            <optgroup label="Rotazioni">
+            <optgroup label="Rotazioni Standard">
                 <option value="rot_fnove">Rotazione F.Nove</option>
                 <option value="spez_fnove">Spezzati F.Nove</option>
                 <option value="rot_proma">Rotazione P.Roma</option>
@@ -164,55 +164,39 @@
     const DATA_INIZIO_NUOVI_TURNI = "2026-02-06"; 
     const ECCEZIONE_DOMENICA_6P = true; 
     
-    // Gestione reset post-aggiornamento: imposta a 'false' se una rotazione NON deve resettarsi
     const RESET_DOPO_AGGIORNAMENTO = {
-        rot_fnove: true,
-        spez_fnove: true,
-        rot_proma: true,
-        spez_proma: true,
-        rot_szaccaria: true,
-        spez_szaccaria: true,
-        rot_lido: true,
-        spez_lido: true
+        rot_fnove: true, spez_fnove: true, rot_proma: true, spez_proma: true,
+        rot_szaccaria: true, spez_szaccaria: true, rot_lido: true, spez_lido: true
     };
 
-    let depositi = {}; // Dati caricati dal file JSON esterno
+    let depositi = {}; 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { version: "0", variazioni: {}, setupStep: 0 };
     let selectedDate, tempRotDate, calendar;
-    let turniDatabase = {}; // Dati caricati dal file JSON esterno
+    let turniDatabase = {};
 
-    // Funzione per caricare entrambi i database esterni prima di avviare l'app
     async function caricaDatiEsterni() {
         try {
             const [infoRes, rotazioniRes] = await Promise.all([
                 fetch('info_turni.json'),
                 fetch('rotazioni.json')
             ]);
-            
             if (infoRes.ok) turniDatabase = await infoRes.json();
             if (rotazioniRes.ok) depositi = await rotazioniRes.json();
-            
-        } catch (e) {
-            console.error("Impossibile caricare i file dati esterni (JSON)", e);
-        }
+        } catch (e) { console.error("Errore caricamento JSON", e); }
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
-        await caricaDatiEsterni(); // Attende il caricamento dei due JSON
-        
+        await caricaDatiEsterni();
         if (!state.depositoAttivo) {
-            document.getElementById('welcomeTitle').innerText = "Benvenuto";
             document.getElementById('welcomeModal').style.display = 'block';
         } else if (state.version !== VERSIONE_TURNI) {
             const deveResettare = RESET_DOPO_AGGIORNAMENTO[state.depositoAttivo] !== false;
-            
             if (state.depositoAttivo.startsWith('disp_') || !deveResettare) {
-                state.version = VERSIONE_TURNI;
-                salvaLocal();
+                state.version = VERSIONE_TURNI; salvaLocal();
                 aggiornaUI(); inizializzaCalendario();
             } else {
                 document.getElementById('welcomeTitle').innerText = "Aggiornamento Turni";
-                document.getElementById('welcomeDesc').innerText = "Rilevata nuova versione. La rotazione verrà ricalcolata mantenendo i tuoi cambi.";
+                document.getElementById('welcomeDesc').innerText = "Nuova versione rilevata. La storia passata verrà conservata e la nuova rotazione partirà dalla data prevista.";
                 document.getElementById('depotSelectMain').style.display = 'none';
                 document.getElementById('btnConfRot').disabled = false;
                 document.getElementById('btnConfRot').style.background = 'var(--turno)';
@@ -229,15 +213,64 @@
         });
     });
 
+    function cristallizzaPassato() {
+        if (!state.riposoStart) return;
+        const limite = stringToNum(DATA_INIZIO_NUOVI_TURNI);
+        const ref = stringToNum(state.riposoStart);
+        
+        // Calcoliamo e salviamo come variazioni fisse tutti i turni fino al giorno prima del nuovo aggiornamento
+        // Partiamo da 30 giorni prima del vecchio riferimento per sicurezza storica
+        for (let curr = ref - 30; curr < limite; curr++) {
+            let dStr = new Date(curr * 86400000).toISOString().split('T')[0];
+            if (!state.variazioni[dStr]) {
+                let turnoScritto = trovaTurnoPerData(dStr);
+                if (turnoScritto) state.variazioni[dStr] = turnoScritto;
+            }
+        }
+    }
+
+    // Helper per trovare il turno calcolato di una data specifica SENZA usare state.variazioni
+    function trovaTurnoPerData(dStr) {
+        let curr = stringToNum(dStr);
+        let ref = stringToNum(state.riposoStart);
+        let dObj = new Date(dStr);
+        
+        let isR = false;
+        if (state.depositoAttivo === 'disp_det') {
+            isR = (((curr - ref) % 6 + 6) % 6 === 0);
+        } else {
+            let pos = ((curr - ref + 6) % 15 + 15) % 15;
+            isR = (pos === 6 || pos === 13 || pos === 14);
+        }
+
+        if (isR) return "RIPOSO";
+        if (state.depositoAttivo.startsWith('disp_')) return "DISP";
+        
+        if (state.rotazioneStart && curr >= stringToNum(state.rotazioneStart)) {
+            let w = 0, rot = stringToNum(state.rotazioneStart);
+            for (let j = rot; j < curr; j++) {
+                let dJ = new Date(j * 86400000).toISOString().split('T')[0];
+                if (!isGiornoRiposo(dJ)) w++;
+            }
+            let startPos = ((stringToNum(state.rotazioneStart) - ref + 6) % 15 + 15) % 15;
+            let offset = [1, 3, 5, 8, 10, 12].includes(startPos) ? 1 : 0;
+            let t = depositi[state.depositoAttivo][(state.turnoIndex + Math.floor((w + offset)/2)) % depositi[state.depositoAttivo].length].toUpperCase();
+            if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) return "DISP";
+            return t;
+        }
+        return null;
+    }
+
     function confermaRotazione() {
         if (!state.depositoAttivo) {
             state.depositoAttivo = document.getElementById('depotSelectMain').value;
             state.setupStep = 1;
+        } else if (state.version !== VERSIONE_TURNI) {
+            cristallizzaPassato(); // Salva la storia prima di cambiare i parametri
         }
         state.version = VERSIONE_TURNI;
         document.getElementById('welcomeModal').style.display = 'none';
-        
-        if (!state.riposoStart) {
+        if (!state.riposoStart || state.setupStep < 3) {
             aggiornaUI(); inizializzaCalendario(); checkGuida(); salvaLocal();
         } else {
             avviaRiconfigurazioneAggiornamento();
@@ -279,7 +312,7 @@
                 state.variazioni = tempVariazioni;
                 let turnoOriginaleObj = turniOriginali.find(e => e.start === date);
                 let nomeOriginale = turnoOriginaleObj ? turnoOriginaleObj.title : "Nessun turno";
-                htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno} (Modificato)<br><strong>Turno originale:</strong> ${nomeOriginale}`;
+                htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno} (Fisso/Modificato)<br><strong>Originale teorico:</strong> ${nomeOriginale}`;
             } else {
                 htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno}`;
             }
@@ -287,13 +320,11 @@
             const dettagli = turniDatabase[nomeTurno.toUpperCase()];
             if (dettagli) {
                 htmlInfo += `<hr style="margin:10px 0; border:0; border-top:1px solid #eee;">`;
-                htmlInfo += ` <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
-                htmlInfo += ` <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
+                htmlInfo += `🕒 <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
+                htmlInfo += `🏁 <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
             }
-
             infoArea.innerHTML = htmlInfo;
             infoArea.style.display = "block";
-            
             popolaCambio();
             document.getElementById('editModal').style.display = 'block';
         }
@@ -321,10 +352,7 @@
     function avviaRiconfigurazioneAggiornamento() {
         let d = new Date(DATA_INIZIO_NUOVI_TURNI);
         let dStr = d.toISOString().split('T')[0];
-        while(isGiornoRiposo(dStr)) {
-            d.setDate(d.getDate() + 1);
-            dStr = d.toISOString().split('T')[0];
-        }
+        while(isGiornoRiposo(dStr)) { d.setDate(d.getDate() + 1); dStr = d.toISOString().split('T')[0]; }
         tempRotDate = dStr;
         document.getElementById('stepTitle').innerText = "Nuova Rotazione";
         document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
@@ -338,11 +366,9 @@
     function isGiornoRiposo(dStr) {
         if (state.variazioni[dStr] === "RIPOSO") return true;
         if (!state.riposoStart) return false;
-        let ref = stringToNum(state.riposoStart);
-        let curr = stringToNum(dStr);
+        let ref = stringToNum(state.riposoStart), curr = stringToNum(dStr);
         if (state.depositoAttivo === 'disp_det') {
-            let pos = ((curr - ref) % 6 + 6) % 6;
-            return (pos === 0);
+            return (((curr - ref) % 6 + 6) % 6 === 0);
         } else {
             let pos = ((curr - ref + 6) % 15 + 15) % 15;
             return (pos === 6 || pos === 13 || pos === 14);
@@ -352,59 +378,42 @@
     function attivaRotazioneFinale() {
         const val = parseInt(document.getElementById('tSel').value);
         if(isNaN(val)) return;
-        const turnoScelto = depositi[state.depositoAttivo][val].toUpperCase();
-        
-        if (turnoScelto === "DISP") {
-            let d = new Date(tempRotDate);
-            d.setDate(d.getDate() + 1);
+        if (depositi[state.depositoAttivo][val].toUpperCase() === "DISP") {
+            let d = new Date(tempRotDate); d.setDate(d.getDate() + 1);
             let dStr = d.toISOString().split('T')[0];
-            while(isGiornoRiposo(dStr)) {
-                d.setDate(d.getDate() + 1);
-                dStr = d.toISOString().split('T')[0];
-            }
+            while(isGiornoRiposo(dStr)) { d.setDate(d.getDate() + 1); dStr = d.toISOString().split('T')[0]; }
             tempRotDate = dStr;
             document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
-            document.getElementById('stepDesc').innerText = "Giorno precedente era DISP. Indica il turno di questo giorno:";
             document.getElementById('stepActionArea').innerHTML = `<select id="tSel"><option value="" disabled selected>Seleziona turno...</option>${getOptionsTurni()}</select>`;
             return;
         }
-        state.turnoIndex = val;
-        state.rotazioneStart = tempRotDate;
-        state.setupStep = 3; 
-        salvaLocal(); 
-        location.reload();
+        state.turnoIndex = val; state.rotazioneStart = tempRotDate; state.setupStep = 3; 
+        salvaLocal(); location.reload();
     }
 
     function calcolaTurni() {
         if (!state.riposoStart) return [];
         let evs = [], ref = stringToNum(state.riposoStart);
-        
         if (Object.keys(depositi).length === 0 && !state.depositoAttivo.startsWith('disp_')) return evs;
 
-        for (let i = -30; i < 300; i++) {
+        for (let i = -60; i < 300; i++) {
             let curr = ref + i, dObj = new Date(curr * 86400000), dStr = dObj.toISOString().split('T')[0];
             if (state.variazioni[dStr]) {
                 let v = state.variazioni[dStr];
                 evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':'bg-modificato', allDay: true });
                 continue;
             }
-            let isR = isGiornoRiposo(dStr);
-            if (isR) {
+            if (isGiornoRiposo(dStr)) {
                 evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
             } else {
                 let t = "";
-                if (state.depositoAttivo.startsWith('disp_')) {
-                    t = "DISP";
-                } else if (state.rotazioneStart && curr >= stringToNum(state.rotazioneStart)) {
+                if (state.depositoAttivo.startsWith('disp_')) { t = "DISP"; }
+                else if (state.rotazioneStart && curr >= stringToNum(state.rotazioneStart)) {
                     let w = 0, rot = stringToNum(state.rotazioneStart);
-                    for (let j = rot; j < curr; j++) {
-                        let dJ = new Date(j * 86400000).toISOString().split('T')[0];
-                        if (!isGiornoRiposo(dJ)) w++;
-                    }
+                    for (let j = rot; j < curr; j++) { if (!isGiornoRiposo(new Date(j * 86400000).toISOString().split('T')[0])) w++; }
                     let startPos = ((stringToNum(state.rotazioneStart) - ref + 6) % 15 + 15) % 15;
-                    const secondiGiorni = [1, 3, 5, 8, 10, 12];
-                    let offsetCompensazione = secondiGiorni.includes(startPos) ? 1 : 0;
-                    t = depositi[state.depositoAttivo][(state.turnoIndex + Math.floor((w + offsetCompensazione)/2)) % depositi[state.depositoAttivo].length].toUpperCase();
+                    let offset = [1, 3, 5, 8, 10, 12].includes(startPos) ? 1 : 0;
+                    t = depositi[state.depositoAttivo][(state.turnoIndex + Math.floor((w + offset)/2)) % depositi[state.depositoAttivo].length].toUpperCase();
                     if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) t = "DISP";
                 }
                 if (t !== "") evs.push({ title: t, start: dStr, className: (t==='DISP'?'bg-disp':'bg-turno'), allDay: true });
@@ -415,25 +424,13 @@
 
     function getOptionsTurni() {
         if (!depositi[state.depositoAttivo]) return ""; 
-        
-        let htmlDisp = "";
-        let htmlTurni = "";
-        let dispAggiunto = false;
-
-        depositi[state.depositoAttivo]
-            .map((n, i) => ({ n: n.toUpperCase(), i: i }))
+        let htmlDisp = "", htmlTurni = "", dispAggiunto = false;
+        depositi[state.depositoAttivo].map((n, i) => ({ n: n.toUpperCase(), i: i }))
             .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}))
             .forEach(item => {
-                if (item.n === "DISP") {
-                    if (!dispAggiunto) {
-                        htmlDisp = `<option value="${item.i}">DISP</option>`;
-                        dispAggiunto = true;
-                    }
-                } else {
-                    htmlTurni += `<option value="${item.i}">${item.n}</option>`;
-                }
+                if (item.n === "DISP") { if (!dispAggiunto) { htmlDisp = `<option value="${item.i}">DISP</option>`; dispAggiunto = true; } }
+                else { htmlTurni += `<option value="${item.i}">${item.n}</option>`; }
             });
-
         return htmlDisp + htmlTurni;
     }
 
@@ -442,7 +439,6 @@
         let mese = dataObj.toLocaleDateString('it-IT', { month: 'long' });
         return dataObj.getDate() + ' ' + mese.charAt(0).toUpperCase() + mese.slice(1);
     }
-    
     function stringToNum(s) { let p = s.split('-'); return Math.floor(new Date(p[0], p[1]-1, p[2], 12, 0, 0).getTime() / 86400000); }
     function salvaLocal() { localStorage.setItem('myTurniApp', JSON.stringify(state)); }
     function chiudiStep() { document.getElementById('stepModal').style.display = 'none'; }
@@ -450,27 +446,20 @@
     function salvaCambioSingolo() { state.variazioni[selectedDate] = document.getElementById('singleTurnoSelect').value; salvaLocal(); location.reload(); }
     function resetGiornoSingolo() { delete state.variazioni[selectedDate]; salvaLocal(); location.reload(); }
     function aggiornaUI() { document.getElementById('activeDepotLabel').innerText = state.depositoAttivo || "Configurazione"; }
-    
     function apriReset() { document.getElementById('resetModal').style.display = 'block'; }
     function chiudiReset() { document.getElementById('resetModal').style.display = 'none'; }
     function confermaReset() { localStorage.removeItem('myTurniApp'); location.reload(); }
-
     function apriBackup() { document.getElementById('backupModal').style.display = 'block'; }
     function chiudiBackup() { document.getElementById('backupModal').style.display = 'none'; }
     
     function esportaDatiSuFile() {
         const data = localStorage.getItem('myTurniApp');
-        if(!data) { alert("Nessun dato da esportare."); return; }
+        if(!data) return;
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const dataOggi = new Date().toISOString().split('T')[0];
-        a.href = url;
-        a.download = `backup_turni_${dataOggi}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        a.href = url; a.download = `backup_turni_${new Date().toISOString().split('T')[0]}.json`;
+        a.click(); URL.revokeObjectURL(url);
     }
     
     function importaDatiDaFile(event) {
@@ -478,15 +467,8 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const contenuto = e.target.result;
-                JSON.parse(contenuto);
-                localStorage.setItem('myTurniApp', contenuto);
-                alert("Backup ripristinato con successo!");
-                location.reload();
-            } catch (err) {
-                alert("Errore: Il file selezionato non è un backup valido.");
-            }
+            try { localStorage.setItem('myTurniApp', e.target.result); alert("Backup ripristinato!"); location.reload(); }
+            catch (err) { alert("Errore file non valido."); }
         };
         reader.readAsText(file);
     }
@@ -494,8 +476,7 @@
     function popolaCambio() {
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="" disabled selected>Cambia...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
-        if(Object.keys(depositi).length === 0) return; 
-        
+        if(Object.keys(depositi).length === 0) return;
         let tutti = []; Object.values(depositi).forEach(list => list.forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }));
         [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
             let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
@@ -517,7 +498,3 @@
 </script>
 </body>
 </html>
-
-
-
-
