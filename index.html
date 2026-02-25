@@ -176,41 +176,34 @@
         spez_lido: true
     };
 
-    const depositi = {
-        rot_fnove: ["disp","4p05","4p29","4p07","disp","4p18","4p09","4p04","4p15","disp","4p21","4p34","4p10","4p01","4p06","4p16","4p33","4p39","4p25","4p24","4p32","4p27","4p08","4p11","4p14","disp","4p17","disp","4p37","4p35","4p03","4p23","4p22","4p31","4p02","4p13","disp","4p36","4p38","disp","m204","4p12","m205","4p26","4p20"],
-        spez_fnove: ["4p19", "4p28", "4p30"],
-        rot_proma: ["6P05","1C11","2C21","2C42","1C05","Disp","2C20","1C39","6P06","2C44","2C35","1C08","1C28","CO03","1C31","6P10","6P09","2C36","2C43","2C32","1C36","1C30","6P07","Disp","2C18","6P08","1C14","2C39","2C45","Disp","1C40","1C26","Disp","1C21","2C14","2C23","2C22","2C34","Disp","3P01","1C09","1C27","2C19","1C01","3P05","2C38","Disp","3P03","6P01","2C47","CO02","1C16","1C32","2C31","2C28","Disp","6P04","2C41","2C26","1C24","3P02","2C13","Disp","6P02","2C46","Disp","1C06","1C23","Disp","1C04","1C37","3P04","CO01","2C24","2C29"],
-        spez_proma: ["2C33", "6P03", "2C17", "1C22", "2C40", "6P11"],
-        rot_szaccaria: ["2C06", "1C17", "1C20", "2C07", "1C15", "2C30", "1C41", "2C10", "disp", "disp", "1C10", "2C09", "1C02", "1C25", "1C03", "2C08", "2C11", "2C27", "1C34", "disp", "disp", "1C07", "2C12", "1C35"],
-        spez_szaccaria: ["2C13", "2C15", "2C16"],
-        rot_lido: ["disp", "5P22", "5P27", "5P15", "5P03", "5P06", "5P19", "5P29", "5P28", "5P13", "disp", "5P21", "5P14", "5P23", "5P18", "5P11", "5P07", "5P26", "5P05", "5P10", "disp", "5P04", "5P12", "5P01", "5P20", "5P09", "disp"],
-        spez_lido: ["5P24", "5P02", "5P08"]
-    };
-
+    let depositi = {}; // Dati caricati dal file JSON esterno
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { version: "0", variazioni: {}, setupStep: 0 };
     let selectedDate, tempRotDate, calendar;
     let turniDatabase = {}; // Dati caricati dal file JSON esterno
 
-    // Funzione per caricare le info turni dal file esterno
-    async function caricaInfoTurni() {
+    // Funzione per caricare entrambi i database esterni prima di avviare l'app
+    async function caricaDatiEsterni() {
         try {
-            const response = await fetch('info_turni.json');
-            if (response.ok) {
-                turniDatabase = await response.json();
-            }
+            const [infoRes, rotazioniRes] = await Promise.all([
+                fetch('info_turni.json'),
+                fetch('rotazioni.json')
+            ]);
+            
+            if (infoRes.ok) turniDatabase = await infoRes.json();
+            if (rotazioniRes.ok) depositi = await rotazioniRes.json();
+            
         } catch (e) {
-            console.error("Impossibile caricare info_turni.json", e);
+            console.error("Impossibile caricare i file dati esterni (JSON)", e);
         }
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
-        await caricaInfoTurni(); // Carica i dati all'avvio
+        await caricaDatiEsterni(); // Attende il caricamento dei due JSON
         
         if (!state.depositoAttivo) {
             document.getElementById('welcomeTitle').innerText = "Benvenuto";
             document.getElementById('welcomeModal').style.display = 'block';
         } else if (state.version !== VERSIONE_TURNI) {
-            // Controllo se la rotazione attiva deve subire il reset/aggiornamento
             const deveResettare = RESET_DOPO_AGGIORNAMENTO[state.depositoAttivo] !== false;
             
             if (state.depositoAttivo.startsWith('disp_') || !deveResettare) {
@@ -291,7 +284,6 @@
                 htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno}`;
             }
 
-            // Aggiunta dettagli dal file JSON
             const dettagli = turniDatabase[nomeTurno.toUpperCase()];
             if (dettagli) {
                 htmlInfo += `<hr style="margin:10px 0; border:0; border-top:1px solid #eee;">`;
@@ -386,6 +378,10 @@
     function calcolaTurni() {
         if (!state.riposoStart) return [];
         let evs = [], ref = stringToNum(state.riposoStart);
+        
+        // Verifica di sicurezza: se i depositi non sono stati caricati non calcola
+        if (Object.keys(depositi).length === 0 && !state.depositoAttivo.startsWith('disp_')) return evs;
+
         for (let i = -30; i < 300; i++) {
             let curr = ref + i, dObj = new Date(curr * 86400000), dStr = dObj.toISOString().split('T')[0];
             if (state.variazioni[dStr]) {
@@ -419,6 +415,7 @@
     }
 
     function getOptionsTurni() {
+        if (!depositi[state.depositoAttivo]) return ""; // Sicurezza se i dati non sono pronti
         return depositi[state.depositoAttivo].map((n, i) => ({ n: n.toUpperCase(), i: i }))
             .sort((a, b) => a.n.localeCompare(b.n, undefined, {numeric: true}))
             .map(item => `<option value="${item.i}">${item.n}</option>`).join('');
@@ -481,6 +478,8 @@
     function popolaCambio() {
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="" disabled selected>Cambia...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
+        if(Object.keys(depositi).length === 0) return; // Se JSON non è ancora caricato
+        
         let tutti = []; Object.values(depositi).forEach(list => list.forEach(t => { if(t.toUpperCase() !== "DISP") tutti.push(t.toUpperCase()); }));
         [...new Set(tutti)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).forEach(t => {
             let o = document.createElement('option'); o.value = t; o.textContent = t; s.appendChild(o);
@@ -502,4 +501,3 @@
 </script>
 </body>
 </html>
- 
