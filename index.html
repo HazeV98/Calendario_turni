@@ -189,8 +189,23 @@
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { version: "0", variazioni: {}, setupStep: 0 };
     let selectedDate, tempRotDate, calendar;
+    let turniDatabase = {}; // Dati caricati dal file JSON esterno
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // Funzione per caricare le info turni dal file esterno
+    async function caricaInfoTurni() {
+        try {
+            const response = await fetch('info_turni.json');
+            if (response.ok) {
+                turniDatabase = await response.json();
+            }
+        } catch (e) {
+            console.error("Impossibile caricare info_turni.json", e);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        await caricaInfoTurni(); // Carica i dati all'avvio
+        
         if (!state.depositoAttivo) {
             document.getElementById('welcomeTitle').innerText = "Benvenuto";
             document.getElementById('welcomeModal').style.display = 'block';
@@ -263,6 +278,7 @@
             let turnoCorrenteObj = turniCalc.find(e => e.start === date);
             let nomeTurno = turnoCorrenteObj ? turnoCorrenteObj.title : "Nessun turno";
             
+            let htmlInfo = "";
             if (state.variazioni[date]) {
                 let tempVariazioni = {...state.variazioni};
                 delete state.variazioni[date];
@@ -270,12 +286,22 @@
                 state.variazioni = tempVariazioni;
                 let turnoOriginaleObj = turniOriginali.find(e => e.start === date);
                 let nomeOriginale = turnoOriginaleObj ? turnoOriginaleObj.title : "Nessun turno";
-                infoArea.innerHTML = `<strong>Turno attuale:</strong> ${nomeTurno} (Modificato)<br><strong>Turno originale:</strong> ${nomeOriginale}`;
-                infoArea.style.display = "block";
+                htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno} (Modificato)<br><strong>Turno originale:</strong> ${nomeOriginale}`;
             } else {
-                infoArea.innerHTML = `<strong>Turno attuale:</strong> ${nomeTurno}`;
-                infoArea.style.display = "block";
+                htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno}`;
             }
+
+            // Aggiunta dettagli dal file JSON
+            const dettagli = turniDatabase[nomeTurno.toUpperCase()];
+            if (dettagli) {
+                htmlInfo += `<hr style="margin:10px 0; border:0; border-top:1px solid #eee;">`;
+                htmlInfo += `🕒 <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
+                htmlInfo += `🏁 <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
+            }
+
+            infoArea.innerHTML = htmlInfo;
+            infoArea.style.display = "block";
+            
             popolaCambio();
             document.getElementById('editModal').style.display = 'block';
         }
@@ -290,7 +316,7 @@
             let d = new Date(selectedDate); d.setDate(d.getDate() + 1);
             tempRotDate = d.toISOString().split('T')[0];
             document.getElementById('btnConfirmDate').style.display = "none";
-            document.getElementById('btnCloseStep').style.display = "none"; // Rimozione tasto chiudi in Passo 3
+            document.getElementById('btnCloseStep').style.display = "none"; 
             document.getElementById('stepTitle').innerText = "Passo 3";
             document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
             document.getElementById('stepDesc').innerText = "Che turno hai in questo giorno?";
@@ -312,7 +338,7 @@
         document.getElementById('stepDateDisplay').innerText = formattaData(tempRotDate);
         document.getElementById('stepDesc').innerText = "Indica il turno per l'inizio della nuova rotazione:";
         document.getElementById('stepActionArea').innerHTML = `<select id="tSel"><option value="" disabled selected>Seleziona turno...</option>${getOptionsTurni()}</select>`;
-        document.getElementById('btnCloseStep').style.display = "none"; // Rimozione tasto chiudi anche qui
+        document.getElementById('btnCloseStep').style.display = "none"; 
         document.getElementById('btnConfirmFinal').style.display = "block";
         document.getElementById('stepModal').style.display = 'block';
     }
@@ -476,3 +502,4 @@
 </script>
 </body>
 </html>
+ 
