@@ -113,7 +113,7 @@
                 <option value="disp_indet">Disponibile 6-2-6-1</option>
                 <option value="disp_det">Disponibile 5-1</option>
             </optgroup>
-            <optgroup label="Rotazioni Standard">
+            <optgroup label="Rotazioni">
                 <option value="rot_fnove">Rotazione F.Nove</option>
                 <option value="spez_fnove">Spezzati F.Nove</option>
                 <option value="rot_proma">Rotazione P.Roma</option>
@@ -162,12 +162,18 @@
 <script>
     // --- PARAMETRI DI CONFIGURAZIONE GLOBALE ---
     const VERSIONE_TURNI = "1.0"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-03-01"; // <--- Cambia questa data per i futuri aggiornamenti
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-06"; // <--- Cambia questa data per i futuri aggiornamenti
     const ECCEZIONE_DOMENICA_6P = true; 
     
     const RESET_DOPO_AGGIORNAMENTO = {
-        rot_fnove: true, spez_fnove: true, rot_proma: true, spez_proma: true,
-        rot_szaccaria: true, spez_szaccaria: true, rot_lido: true, spez_lido: true
+        rot_fnove: true, 
+        spez_fnove: true, 
+        rot_proma: true, 
+        spez_proma: true,
+        rot_szaccaria: true, 
+        spez_szaccaria: true, 
+        rot_lido: true, 
+        spez_lido: true
     };
 
     let depositi = {}; 
@@ -275,8 +281,8 @@
             const dettagli = turniDatabase[nomeTurno.toUpperCase()];
             if (dettagli) {
                 htmlInfo += `<hr style="margin:10px 0; border:0; border-top:1px solid #eee;">`;
-                htmlInfo += `🕒 <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
-                htmlInfo += `🏁 <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
+                htmlInfo += ` <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
+                htmlInfo += ` <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
             }
             infoArea.innerHTML = htmlInfo;
             infoArea.style.display = "block";
@@ -464,3 +470,4 @@
 </script>
 </body>
 </html>
+
