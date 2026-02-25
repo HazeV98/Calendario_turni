@@ -287,8 +287,8 @@
             const dettagli = turniDatabase[nomeTurno.toUpperCase()];
             if (dettagli) {
                 htmlInfo += `<hr style="margin:10px 0; border:0; border-top:1px solid #eee;">`;
-                htmlInfo += `🕒 <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
-                htmlInfo += `🏁 <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
+                htmlInfo += ` <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
+                htmlInfo += ` <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
             }
 
             infoArea.innerHTML = htmlInfo;
@@ -517,3 +517,4 @@
 </script>
 </body>
 </html>
+
