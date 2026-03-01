@@ -8,7 +8,7 @@
   "1C02": {
     "inizio": "5:20",
     "luogoInizio": "DEP. ARSENALE",
-    "fine": "12:15",
+    "fine": "12:05",
     "luogoFine": "S.ZACCARIA"
   },
   "1C03": {
@@ -212,229 +212,229 @@
   "4P02": {
     "inizio": "5:48",
     "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "12:59",
+    "fine": "12:28",
     "luogoFine": "F.TE NOVE"
   },
   "4P03": {
-    "inizio": "12:21",
+    "inizio": "11:34",
     "luogoInizio": "F.TE NOVE",
-    "fine": "19:26",
+    "fine": "18:46",
     "luogoFine": "F.TE NOVE"
   },
   "4P04": {
-    "inizio": "4:21",
+    "inizio": "4:19",
     "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "11:26",
+    "fine": "10:43",
     "luogoFine": "F.TE NOVE"
   },
   "4P05": {
-    "inizio": "5:15",
-    "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "12:08",
+    "inizio": "4:55",
+    "luogoInizio": "F.TE NOVE",
+    "fine": "11:43",
     "luogoFine": "F.TE NOVE"
   },
   "4P06": {
-    "inizio": "13:14",
+    "inizio": "13:41",
     "luogoInizio": "F.TE NOVE",
-    "fine": "20:39",
+    "fine": "20:28",
     "luogoFine": "F.TE NOVE"
   },
   "4P07": {
-    "inizio": "12:30",
+    "inizio": "12:43",
     "luogoInizio": "F.TE NOVE",
-    "fine": "19:19",
+    "fine": "19:43",
     "luogoFine": "F.TE NOVE"
   },
   "4P08": {
-    "inizio": "4:07",
+    "inizio": "4:00",
     "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "10:50",
+    "fine": "10:24",
     "luogoFine": "F.TE NOVE"
   },
   "4P09": {
-    "inizio": "9:13",
+    "inizio": "8:54",
     "luogoInizio": "F.TE NOVE",
-    "fine": "15:59",
+    "fine": "15:43",
     "luogoFine": "F.TE NOVE"
   },
   "4P10": {
-    "inizio": "12:01",
+    "inizio": "10:01",
     "luogoInizio": "F.TE NOVE",
-    "fine": "19:15",
+    "fine": "16:39",
     "luogoFine": "F.TE NOVE"
   },
   "4P11": {
-    "inizio": "12:34",
+    "inizio": "13:01",
     "luogoInizio": "F.TE NOVE",
     "fine": "19:48",
     "luogoFine": "F.TE NOVE"
   },
   "4P12": {
-    "inizio": "15:23",
+    "inizio": "15:04",
     "luogoInizio": "F.TE NOVE",
-    "fine": "22:25",
-    "luogoFine": "DEP. F.TE NOVE"
+    "fine": "21:28",
+    "luogoFine": "F.TE NOVE"
   },
   "4P13": {
-    "inizio": "17:14",
+    "inizio": "16:43",
     "luogoInizio": "F.TE NOVE",
-    "fine": "23:54",
+    "fine": "23:56",
     "luogoFine": "DEP. F.TE NOVE"
   },
   "4P14": {
-    "inizio": "6:10",
-    "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "12:39",
+    "inizio": "6:54",
+    "luogoInizio": "F.TE NOVE",
+    "fine": "14:19",
     "luogoFine": "F.TE NOVE"
   },
   "4P15": {
-    "inizio": "14:41",
+    "inizio": "15:03",
     "luogoInizio": "F.TE NOVE",
     "fine": "21:46",
     "luogoFine": "F.TE NOVE"
   },
   "4P16": {
-    "inizio": "10:34",
+    "inizio": "10:44",
     "luogoInizio": "F.TE NOVE",
     "fine": "17:08",
     "luogoFine": "F.TE NOVE"
   },
   "4P17": {
+    "inizio": "15:01",
+    "luogoInizio": "F.TE NOVE",
+    "fine": "22:25",
+    "luogoFine": "F.TE NOVE"
+  },
+  "4P18": {
+    "inizio": "13:43",
+    "luogoInizio": "F.TE NOVE",
+    "fine": "20:48",
+    "luogoFine": "F.TE NOVE"
+  },
+  "4P19": {
+    "inizio": "6:00",
+    "luogoInizio": "DEP. F.TE NOVE",
+    "fine": "15:06",
+    "luogoFine": "F.TE NOVE"
+  },
+  "4P20": {
+    "inizio": "17:26",
+    "luogoInizio": "F.TE NOVE",
+    "fine": "23:50",
+    "luogoFine": "F.TE NOVE"
+  },
+  "4P21": {
+    "inizio": "6:41",
+    "luogoInizio": "DEP. F.TE NOVE",
+    "fine": "13:28",
+    "luogoFine": "F.TE NOVE"
+  },
+  "4P22": {
     "inizio": "16:01",
     "luogoInizio": "F.TE NOVE",
     "fine": "23:05",
     "luogoFine": "F.TE NOVE"
   },
-  "4P18": {
-    "inizio": "14:03",
-    "luogoInizio": "F.TE NOVE",
-    "fine": "21:05",
-    "luogoFine": "DEP. F.TE NOVE"
-  },
-  "4P19": {
-    "inizio": "6:08",
+  "4P23": {
+    "inizio": "6:10",
     "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "15:27",
+    "fine": "13:23",
     "luogoFine": "F.TE NOVE"
   },
-  "4P20": {
-    "inizio": "14:27",
-    "luogoInizio": "F.TE NOVE",
-    "fine": "21:51",
-    "luogoFine": "DEP. F.TE NOVE"
+  "4P24": {
+    "inizio": "5:44",
+    "luogoInizio": "DEP. ARSENALE",
+    "fine": "12:08",
+    "luogoFine": "F.TE NOVE"
   },
-  "4P21": {
-    "inizio": "4:47",
+  "4P25": {
+    "inizio": "10:21",
+    "luogoInizio": "F.TE NOVE",
+    "fine": "16:46",
+    "luogoFine": "F.TE NOVE"
+  },
+  "4P26": {
+    "inizio": "5:15",
     "luogoInizio": "DEP. F.TE NOVE",
     "fine": "11:46",
     "luogoFine": "F.TE NOVE"
   },
-  "4P22": {
-    "inizio": "16:03",
-    "luogoInizio": "F.TE NOVE",
-    "fine": "22:27",
-    "luogoFine": "F.TE NOVE"
-  },
-  "4P23": {
-    "inizio": "6:41",
-    "luogoInizio": "F.TE NOVE",
-    "fine": "13:19",
-    "luogoFine": "F.TE NOVE"
-  },
-  "4P24": {
-    "inizio": "5:22",
-    "luogoInizio": "F.TE NOVE",
-    "fine": "12:42",
-    "luogoFine": "F.TE NOVE"
-  },
-  "4P25": {
-    "inizio": "9:15",
-    "luogoInizio": "F.TE NOVE",
-    "fine": "16:19",
-    "luogoFine": "F.TE NOVE"
-  },
-  "4P26": {
-    "inizio": "5:14",
-    "luogoInizio": "F.TE NOVE",
-    "fine": "12:25",
-    "luogoFine": "F.TE NOVE"
-  },
   "4P27": {
-    "inizio": "7:14",
+    "inizio": "8:19",
     "luogoInizio": "F.TE NOVE",
-    "fine": "14:08",
+    "fine": "14:43",
     "luogoFine": "F.TE NOVE"
   },
   "4P28": {
-    "inizio": "6:10",
-    "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "15:36",
+    "inizio": "6:02",
+    "luogoInizio": "F.TE NOVE",
+    "fine": "15:08",
     "luogoFine": "F.TE NOVE"
   },
   "4P29": {
-    "inizio": "18:00",
+    "inizio": "18:04",
     "luogoInizio": "F.TE NOVE",
-    "fine": "0:24",
+    "fine": "0:28",
     "luogoFine": "DEP. F.TE NOVE"
   },
   "4P30": {
     "inizio": "6:02",
     "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "15:14",
+    "fine": "14:59",
     "luogoFine": "F.TE NOVE"
   },
   "4P31": {
-    "inizio": "10:34",
+    "inizio": "10:43",
     "luogoInizio": "F.TE NOVE",
-    "fine": "17:26",
+    "fine": "17:48",
     "luogoFine": "F.TE NOVE"
   },
   "4P32": {
-    "inizio": "13:21",
+    "inizio": "13:03",
     "luogoInizio": "F.TE NOVE",
-    "fine": "20:19",
-    "luogoFine": "F.TE NOVE"
+    "fine": "20:25",
+    "luogoFine": "DEP. F.TE NOVE"
   },
   "4P33": {
-    "inizio": "4:14",
+    "inizio": "4:27",
     "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "11:39",
+    "fine": "11:03",
     "luogoFine": "F.TE NOVE"
   },
   "4P34": {
-    "inizio": "14:14",
+    "inizio": "14:41",
     "luogoInizio": "F.TE NOVE",
-    "fine": "21:25",
+    "fine": "21:05",
     "luogoFine": "DEP. F.TE NOVE"
   },
   "4P35": {
-    "inizio": "17:01",
+    "inizio": "17:12",
     "luogoInizio": "F.TE NOVE",
-    "fine": "23:34",
+    "fine": "23:36",
     "luogoFine": "DEP. F.TE NOVE"
   },
   "4P36": {
-    "inizio": "6:41",
+    "inizio": "4:47",
     "luogoInizio": "DEP. F.TE NOVE",
-    "fine": "13:46",
+    "fine": "11:23",
     "luogoFine": "F.TE NOVE"
   },
   "4P37": {
     "inizio": "5:58",
     "luogoInizio": "DEP. ARSENALE",
-    "fine": "13:22",
+    "fine": "12:59",
     "luogoFine": "F.TE NOVE"
   },
   "4P38": {
-    "inizio": "15:00",
+    "inizio": "14:43",
     "luogoInizio": "F.TE NOVE",
-    "fine": "21:24",
-    "luogoFine": "F.TE NOVE"
+    "fine": "21:51",
+    "luogoFine": "DEP. F.TE NOVE"
   },
   "4P39": {
     "inizio": "14:54",
     "luogoInizio": "F.TE NOVE",
-    "fine": "22:07",
+    "fine": "22:05",
     "luogoFine": "F.TE NOVE"
   },
   "5P01": {
@@ -444,219 +444,219 @@
     "luogoFine": "LIDO"
   },
   "5P02": {
-    "inizio": "6:04",
+    "inizio": "6:00",
     "luogoInizio": "S.ZACCARIA",
-    "fine": "15:13",
+    "fine": "15:07",
     "luogoFine": "LIDO"
   },
   "5P03": {
-    "inizio": "9:44",
+    "inizio": "9:52",
     "luogoInizio": "LIDO",
-    "fine": "16:29",
-    "luogoFine": "LIDO"
+    "fine": "16:53",
+    "luogoFine": "S.ZACCARIA"
   },
   "5P04": {
-    "inizio": "13:54",
-    "luogoInizio": "LIDO",
+    "inizio": "14:25",
+    "luogoInizio": "S.ZACCARIA",
     "fine": "20:49",
     "luogoFine": "DEP.S.ELENA"
   },
   "5P05": {
-    "inizio": "18:38",
+    "inizio": "18:02",
     "luogoInizio": "LIDO",
     "fine": "1:02",
     "luogoFine": "DEP.S.ELENA"
   },
   "5P06": {
-    "inizio": "5:36",
-    "luogoInizio": "S.ZACCARIA",
-    "fine": "12:20",
+    "inizio": "5:43",
+    "luogoInizio": "LIDO",
+    "fine": "12:07",
     "luogoFine": "LIDO"
   },
   "5P07": {
-    "inizio": "12:30",
-    "luogoInizio": "S.ZACCARIA",
-    "fine": "18:54",
+    "inizio": "13:02",
+    "luogoInizio": "LIDO",
+    "fine": "20:19",
     "luogoFine": "LIDO"
   },
   "5P08": {
-    "inizio": "6:25",
+    "inizio": "6:00",
     "luogoInizio": "DEP.S.ELENA",
-    "fine": "15:54",
+    "fine": "15:11",
     "luogoFine": "LIDO"
   },
   "5P09": {
-    "inizio": "12:24",
+    "inizio": "11:02",
     "luogoInizio": "LIDO",
-    "fine": "18:48",
+    "fine": "18:07",
     "luogoFine": "LIDO"
   },
   "5P10": {
-    "inizio": "13:10",
-    "luogoInizio": "S.ZACCARIA",
-    "fine": "19:35",
+    "inizio": "12:42",
+    "luogoInizio": "LIDO",
+    "fine": "19:59",
     "luogoFine": "LIDO"
   },
   "5P11": {
-    "inizio": "16:34",
+    "inizio": "17:34",
     "luogoInizio": "LIDO",
-    "fine": "23:45",
+    "fine": "0:27",
     "luogoFine": "LIDO"
   },
   "5P12": {
-    "inizio": "7:15",
+    "inizio": "8:02",
     "luogoInizio": "LIDO",
-    "fine": "13:39",
-    "luogoFine": "LIDO"
+    "fine": "15:13",
+    "luogoFine": "S.ZACCARIA"
   },
   "5P13": {
-    "inizio": "15:14",
+    "inizio": "14:45",
     "luogoInizio": "LIDO",
-    "fine": "21:38",
-    "luogoFine": "LIDO"
+    "fine": "21:09",
+    "luogoFine": "DEP.S.ELENA"
   },
   "5P14": {
-    "inizio": "14:31",
+    "inizio": "14:14",
     "luogoInizio": "LIDO",
-    "fine": "20:55",
+    "fine": "20:44",
     "luogoFine": "LIDO"
   },
   "5P15": {
-    "inizio": "14:10",
+    "inizio": "15:02",
     "luogoInizio": "LIDO",
-    "fine": "21:32",
+    "fine": "22:06",
     "luogoFine": "LIDO"
   },
   "5P18": {
-    "inizio": "5:27",
+    "inizio": "5:21",
     "luogoInizio": "DEP.S.ELENA",
-    "fine": "12:40",
+    "fine": "12:19",
     "luogoFine": "LIDO"
   },
   "5P19": {
-    "inizio": "15:38",
+    "inizio": "16:02",
     "luogoInizio": "LIDO",
-    "fine": "22:02",
+    "fine": "22:42",
     "luogoFine": "DEP.S.ELENA"
   },
   "5P20": {
-    "inizio": "17:24",
-    "luogoInizio": "LIDO",
+    "inizio": "16:48",
+    "luogoInizio": "S.ZACCARIA",
     "fine": "0:10",
     "luogoFine": "DEP.S.ELENA"
   },
   "5P21": {
-    "inizio": "5:57",
+    "inizio": "5:44",
     "luogoInizio": "DEP.S.ELENA",
-    "fine": "13:09",
+    "fine": "12:59",
     "luogoFine": "LIDO"
   },
   "5P22": {
-    "inizio": "9:14",
+    "inizio": "8:35",
     "luogoInizio": "LIDO",
-    "fine": "16:15",
-    "luogoFine": "S.ZACCARIA"
+    "fine": "14:59",
+    "luogoFine": "LIDO"
   },
   "5P23": {
-    "inizio": "11:14",
+    "inizio": "10:32",
     "luogoInizio": "LIDO",
-    "fine": "17:49",
+    "fine": "17:47",
     "luogoFine": "LIDO"
   },
   "5P24": {
-    "inizio": "6:17",
+    "inizio": "6:22",
     "luogoInizio": "DEP.S.ELENA",
-    "fine": "15:22",
+    "fine": "15:39",
     "luogoFine": "LIDO"
   },
   "5P26": {
     "inizio": "7:00",
     "luogoInizio": "LIDO",
-    "fine": "13:24",
-    "luogoFine": "S.ZACCARIA"
+    "fine": "14:19",
+    "luogoFine": "LIDO"
   },
   "5P27": {
-    "inizio": "5:15",
+    "inizio": "4:56",
     "luogoInizio": "DEP.S.ELENA",
-    "fine": "12:05",
+    "fine": "11:47",
     "luogoFine": "LIDO"
   },
   "5P28": {
-    "inizio": "6:30",
+    "inizio": "6:12",
     "luogoInizio": "LIDO",
-    "fine": "13:15",
+    "fine": "13:13",
     "luogoFine": "S.ZACCARIA"
   },
   "5P29": {
-    "inizio": "11:24",
-    "luogoInizio": "LIDO",
-    "fine": "18:35",
-    "luogoFine": "S.ZACCARIA"
+    "inizio": "13:08",
+    "luogoInizio": "S.ZACCARIA",
+    "fine": "19:47",
+    "luogoFine": "LIDO"
   },
   "6P01": {
-    "inizio": "5:37",
+    "inizio": "5:34",
     "luogoInizio": "DEP. TRONCHETT",
-    "fine": "12:01",
+    "fine": "11:58",
     "luogoFine": "P.ROMA"
   },
   "6P02": {
-    "inizio": "6:40",
+    "inizio": "6:41",
     "luogoInizio": "DEP. TRONCHETT",
-    "fine": "13:41",
+    "fine": "13:38",
     "luogoFine": "P.ROMA"
   },
   "6P03": {
     "inizio": "6:53",
     "luogoInizio": "DEP. TRONCHETT",
-    "fine": "15:56",
+    "fine": "15:53",
     "luogoFine": "P.ROMA"
   },
   "6P04": {
-    "inizio": "12:36",
+    "inizio": "12:53",
     "luogoInizio": "P.ROMA",
-    "fine": "19:41",
+    "fine": "19:38",
     "luogoFine": "P.ROMA"
   },
   "6P05": {
-    "inizio": "6:20",
+    "inizio": "6:21",
     "luogoInizio": "DEP. TRONCHETT",
-    "fine": "13:21",
+    "fine": "13:18",
     "luogoFine": "P.ROMA"
   },
   "6P06": {
-    "inizio": "14:16",
+    "inizio": "14:13",
     "luogoInizio": "P.ROMA",
-    "fine": "20:56",
+    "fine": "20:52",
     "luogoFine": "DEP. TRONCHETT"
   },
   "6P07": {
-    "inizio": "14:36",
+    "inizio": "14:33",
     "luogoInizio": "P.ROMA",
-    "fine": "21:16",
+    "fine": "21:12",
     "luogoFine": "DEP. TRONCHETT"
   },
   "6P08": {
-    "inizio": "13:56",
+    "inizio": "13:53",
     "luogoInizio": "P.ROMA",
-    "fine": "20:56",
+    "fine": "20:53",
     "luogoFine": "DEP. TRONCHETT"
   },
   "6P09": {
-    "inizio": "15:05",
+    "inizio": "15:08",
     "luogoInizio": "P.ROMA",
-    "fine": "21:36",
+    "fine": "21:32",
     "luogoFine": "DEP. TRONCHETT"
   },
   "6P10": {
-    "inizio": "7:36",
+    "inizio": "7:33",
     "luogoInizio": "P.ROMA",
-    "fine": "14:21",
+    "fine": "13:58",
     "luogoFine": "P.ROMA"
   },
   "6P11": {
     "inizio": "6:33",
     "luogoInizio": "DEP. TRONCHETT",
-    "fine": "15:36",
+    "fine": "15:33",
     "luogoFine": "P.ROMA"
   },
   "3P01": {
@@ -686,8 +686,8 @@
   "3P05": {
     "inizio": "13:50",
     "luogoInizio": "P.ROMA",
-    "fine": "21:12",
-    "luogoFine": "DEP. TRONCHETT"
+    "fine": "21:14",
+    "luogoFine": "P.ROMA"
   },
   "2C06": {
     "inizio": "4:40",
@@ -834,8 +834,8 @@
     "luogoFine": "M.V.E."
   },
   "2C31": {
-    "inizio": "13:14",
-    "luogoInizio": "P.ROMA",
+    "inizio": "12:57",
+    "luogoInizio": "DEP. TRONCHETT",
     "fine": "20:21",
     "luogoFine": "P.ROMA"
   },
