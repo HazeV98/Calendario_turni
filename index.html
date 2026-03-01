@@ -181,21 +181,38 @@
     let selectedDate, tempRotDate, calendar;
     let turniDatabase = {};
 
-    async function caricaDatiEsterni() {
+        async function caricaDatiEsterni() {
         try {
+            // Aggiungiamo un parametro casuale (cache-buster) per forzare il download del file nuovo
+            const nocache = "?v=" + new Date().getTime();
             const [infoRes, rotazioniRes] = await Promise.all([
-                fetch('info_turni.json'), fetch('rotazioni.json')
+                fetch('info_turni.json' + nocache), 
+                fetch('rotazioni.json' + nocache)
             ]);
-            if (infoRes.ok) turniDatabase = await infoRes.json();
-            if (rotazioniRes.ok) depositi = await rotazioniRes.json();
-        } catch (e) { console.error("Errore caricamento JSON", e); }
+            
+            if (infoRes.ok) {
+                turniDatabase = await infoRes.json();
+                // Aggiorniamo il database in locale ogni volta che lo scarichiamo
+                state.turniDatabaseCache = turniDatabase;
+            }
+            if (rotazioniRes.ok) {
+                depositi = await rotazioniRes.json();
+            }
+            salvaLocal();
+        } catch (e) { 
+            console.error("Errore caricamento JSON, uso cache locale se presente", e);
+            if (state.turniDatabaseCache) turniDatabase = state.turniDatabaseCache;
+        }
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
+        // 1. Carichiamo sempre i dati freschi dal server all'avvio
         await caricaDatiEsterni();
+
         if (!state.depositoAttivo) {
             document.getElementById('welcomeModal').style.display = 'block';
         } else if (state.version !== VERSIONE_TURNI) {
+
             const deveResettare = RESET_DOPO_AGGIORNAMENTO[state.depositoAttivo] !== false;
             if (state.depositoAttivo.startsWith('disp_') || !deveResettare) {
                 state.version = VERSIONE_TURNI; salvaLocal();
@@ -470,6 +487,7 @@
 </script>
 </body>
 </html>
+
 
 
 
