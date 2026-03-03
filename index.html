@@ -163,9 +163,12 @@
 </div>
 
 <script>
-    const VERSIONE_TURNI = "1.0"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-02-06"; 
+    const VERSIONE_TURNI = "1.0.1"; 
+    const DATA_INIZIO_NUOVI_TURNI = "2026-03-01"; 
     const ECCEZIONE_DOMENICA_6P = true; 
+
+    // ELENCO FILE INFO: Aggiungi qui i nomi dei tuoi file JSON
+    const LISTA_FILE_INFO = ["info_turni_dal_2026-03-02.json", "info_turni_2026-02-06.json"];
     
     const RESET_DOPO_AGGIORNAMENTO = {
         rot_fnove: true, 
@@ -179,25 +182,36 @@
     };
 
     let depositi = {}; 
-    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { version: "0", variazioni: {}, setupStep: 0 };
+    let state = JSON.parse(localStorage.getItem('myTurniApp')) || { version: "0", variazioni: {}, setupStep: 0, dbCache: {} };
     let selectedDate, tempRotDate, calendar;
-    let turniDatabase = {};
+
+    // Helper per estrarre la data dal nome del file
+    function estraiDataDaNome(nome) {
+        const match = nome.match(/\d{4}-\d{2}-\d{2}/);
+        return match ? match[0] : null;
+    }
 
     async function caricaDatiEsterni() {
         try {
             const nocache = "?v=" + new Date().getTime();
-            const [infoRes, rotazioniRes] = await Promise.all([
-                fetch('info_turni.json' + nocache), fetch('rotazioni.json' + nocache)
-            ]);
-            if (infoRes.ok) {
-                turniDatabase = await infoRes.json();
-                state.turniDatabaseCache = turniDatabase;
-            }
+            const rotazioniRes = await fetch('rotazioni.json' + nocache);
             if (rotazioniRes.ok) depositi = await rotazioniRes.json();
+
+            // Caricamento file info multipli
+            if (!state.dbCache) state.dbCache = {};
+            const promises = LISTA_FILE_INFO.map(async (file) => {
+                const dataInizio = estraiDataDaNome(file);
+                if (dataInizio) {
+                    try {
+                        const res = await fetch(file + nocache);
+                        if (res.ok) state.dbCache[dataInizio] = await res.json();
+                    } catch(e) { console.error("Errore file", file); }
+                }
+            });
+            await Promise.all(promises);
             salvaLocal();
         } catch (e) { 
             console.error("Errore caricamento JSON", e);
-            if (state.turniDatabaseCache) turniDatabase = state.turniDatabaseCache;
         }
     }
 
@@ -263,7 +277,7 @@
             document.getElementById('stepTitle').innerText = "Passo 2";
             document.getElementById('stepDesc').innerText = "Seleziona nel calendario uno dei tuoi riposi singoli";
             document.getElementById('btnConfirmDate').style.display = "none";
-            document.getElementById('btnBackStep').style.display = "block"; // Visibile nella guida
+            document.getElementById('btnBackStep').style.display = "block"; 
             document.getElementById('btnCloseStep').style.display = "block";
             document.getElementById('btnCloseStep').innerText = "Seleziona";
             document.getElementById('stepModal').style.display = 'block';
@@ -276,7 +290,7 @@
             document.getElementById('stepDateDisplay').innerText = formattaData(date);
             document.getElementById('stepDesc').innerText = "È un tuo giorno di riposo?";
             document.getElementById('btnConfirmDate').style.display = "block";
-            document.getElementById('btnBackStep').style.display = "none"; // MODIFICA: Scompare in fase di conferma
+            document.getElementById('btnBackStep').style.display = "none"; 
             document.getElementById('btnCloseStep').style.display = "block";
             document.getElementById('btnCloseStep').innerText = "Chiudi";
             document.getElementById('stepModal').style.display = 'block';
@@ -287,7 +301,19 @@
             let turnoCorrenteObj = turniCalc.find(e => e.start === date);
             let nomeTurno = turnoCorrenteObj ? turnoCorrenteObj.title : "Nessun turno";
             let htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno} ${state.variazioni[date] ? '(Modificato)' : ''}`;
-            const dettagli = turniDatabase[nomeTurno.toUpperCase()];
+            
+            // RICERCA DATABASE CORRETTO
+            const dateChiavi = Object.keys(state.dbCache || {}).sort();
+            let dbCorrente = {};
+            const dSelezionata = stringToNum(date);
+            for (let i = dateChiavi.length - 1; i >= 0; i--) {
+                if (dSelezionata >= stringToNum(dateChiavi[i])) {
+                    dbCorrente = state.dbCache[dateChiavi[i]];
+                    break;
+                }
+            }
+
+            const dettagli = dbCorrente[nomeTurno.toUpperCase()];
             if (dettagli) {
                 htmlInfo += `<hr style="margin:10px 0; border:0; border-top:1px solid #eee;">`;
                 htmlInfo += `<b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
@@ -365,9 +391,7 @@
         if (!state.riposoStart) return [];
         let evs = [];
         let today = new Date();
-        let firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         
-        // MODIFICA: Calcolo esteso a 365 giorni dal riferimento della rotazione
         let limit = 365;
         if (state.rotazioneStart) {
             let distDaOggi = Math.abs(stringToNum(today.toISOString().split('T')[0]) - stringToNum(state.rotazioneStart));
