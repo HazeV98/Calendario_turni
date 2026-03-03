@@ -26,8 +26,10 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Barra ottimizzata per Safe Area iPhone */
         #topBar { 
-            padding: 15px 20px; display: flex; justify-content: space-between; 
+            padding: calc(20px + env(safe-area-inset-top)) 20px 15px 20px; 
+            display: flex; justify-content: space-between; 
             align-items: center; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             position: sticky; top: 0; z-index: 100;
         }
@@ -113,7 +115,7 @@
                 <option value="disp_indet">Disponibile 6-2-6-1</option>
                 <option value="disp_det">Disponibile 5-1</option>
             </optgroup>
-            <optgroup label="Rotazioni">
+            <optgroup label="Rotazioni Standard">
                 <option value="rot_fnove">Rotazione F.Nove</option>
                 <option value="spez_fnove">Spezzati F.Nove</option>
                 <option value="rot_proma">Rotazione P.Roma</option>
@@ -137,6 +139,7 @@
         <div id="stepButtons">
             <button id="btnConfirmDate" class="btn" style="background: var(--riposo); display:none;" onclick="procediConfigurazione()">Sì, conferma data</button>
             <button id="btnConfirmFinal" class="btn" style="background: var(--riposo); display:none;" onclick="attivaRotazioneFinale()">Conferma e Attiva</button>
+            <button id="btnBackStep" class="btn" style="background: #adb5bd; display:none;" onclick="tornaAllaRotazione()">Indietro (Cambia Rotazione)</button>
             <button id="btnCloseStep" class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiStep()">Chiudi</button>
         </div>
     </div>
@@ -160,9 +163,8 @@
 </div>
 
 <script>
-    // --- PARAMETRI DI CONFIGURAZIONE GLOBALE ---
     const VERSIONE_TURNI = "1.0"; 
-    const DATA_INIZIO_NUOVI_TURNI = "2026-02-06"; // <--- Cambia questa data per i futuri aggiornamenti
+    const DATA_INIZIO_NUOVI_TURNI = "2026-02-06"; 
     const ECCEZIONE_DOMENICA_6P = true; 
     
     const RESET_DOPO_AGGIORNAMENTO = {
@@ -181,51 +183,39 @@
     let selectedDate, tempRotDate, calendar;
     let turniDatabase = {};
 
-        async function caricaDatiEsterni() {
+    async function caricaDatiEsterni() {
         try {
-            // Aggiungiamo un parametro casuale (cache-buster) per forzare il download del file nuovo
             const nocache = "?v=" + new Date().getTime();
             const [infoRes, rotazioniRes] = await Promise.all([
-                fetch('info_turni.json' + nocache), 
-                fetch('rotazioni.json' + nocache)
+                fetch('info_turni.json' + nocache), fetch('rotazioni.json' + nocache)
             ]);
-            
             if (infoRes.ok) {
                 turniDatabase = await infoRes.json();
-                // Aggiorniamo il database in locale ogni volta che lo scarichiamo
                 state.turniDatabaseCache = turniDatabase;
             }
-            if (rotazioniRes.ok) {
-                depositi = await rotazioniRes.json();
-            }
+            if (rotazioniRes.ok) depositi = await rotazioniRes.json();
             salvaLocal();
         } catch (e) { 
-            console.error("Errore caricamento JSON, uso cache locale se presente", e);
+            console.error("Errore caricamento JSON", e);
             if (state.turniDatabaseCache) turniDatabase = state.turniDatabaseCache;
         }
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
-        // 1. Carichiamo sempre i dati freschi dal server all'avvio
         await caricaDatiEsterni();
-
         if (!state.depositoAttivo) {
             document.getElementById('welcomeModal').style.display = 'block';
         } else if (state.version !== VERSIONE_TURNI) {
-
             const deveResettare = RESET_DOPO_AGGIORNAMENTO[state.depositoAttivo] !== false;
             if (state.depositoAttivo.startsWith('disp_') || !deveResettare) {
                 state.version = VERSIONE_TURNI; salvaLocal();
                 aggiornaUI(); inizializzaCalendario();
             } else {
-                // Calcolo dinamico delle date per il messaggio di avviso
                 const dataLimiteObj = new Date(DATA_INIZIO_NUOVI_TURNI);
                 const dataMenoUnoObj = new Date(dataLimiteObj);
                 dataMenoUnoObj.setDate(dataMenoUnoObj.getDate() - 1);
-                
                 const strLimite = formattaData(DATA_INIZIO_NUOVI_TURNI);
                 const strMenoUno = formattaData(dataMenoUnoObj.toISOString().split('T')[0]);
-
                 document.getElementById('welcomeTitle').innerText = "Aggiornamento Turni";
                 document.getElementById('welcomeDesc').innerText = `Il calendario rimarrà invariato fino al ${strMenoUno}. Dal ${strLimite} inizierà la nuova rotazione.`;
                 document.getElementById('depotSelectMain').style.display = 'none';
@@ -237,7 +227,6 @@
         } else {
             aggiornaUI(); inizializzaCalendario(); checkGuida();
         }
-
         document.getElementById('depotSelectMain').addEventListener('change', () => {
             document.getElementById('btnConfRot').disabled = false;
             document.getElementById('btnConfRot').style.background = 'var(--turno)';
@@ -249,13 +238,11 @@
             state.depositoAttivo = document.getElementById('depotSelectMain').value;
             state.setupStep = 1;
         } else if (state.version !== VERSIONE_TURNI) {
-            // Salvataggio configurazione attuale nello storico
             state.history = {
                 riposoStart: state.riposoStart,
                 rotazioneStart: state.rotazioneStart,
                 turnoIndex: state.turnoIndex,
-                depositoAttivo: state.depositoAttivo,
-                threshold: DATA_INIZIO_NUOVI_TURNI // Memorizza la data che ha attivato questo storico
+                depositoAttivo: state.depositoAttivo
             };
         }
         state.version = VERSIONE_TURNI;
@@ -267,11 +254,16 @@
         }
     }
 
+    function tornaAllaRotazione() {
+        state.setupStep = 0; state.depositoAttivo = null; salvaLocal(); location.reload();
+    }
+
     function checkGuida() {
         if (state.setupStep === 1) {
             document.getElementById('stepTitle').innerText = "Passo 2";
             document.getElementById('stepDesc').innerText = "Seleziona nel calendario uno dei tuoi riposi singoli";
             document.getElementById('btnConfirmDate').style.display = "none";
+            document.getElementById('btnBackStep').style.display = "block"; // Visibile nella guida
             document.getElementById('btnCloseStep').style.display = "block";
             document.getElementById('btnCloseStep').innerText = "Seleziona";
             document.getElementById('stepModal').style.display = 'block';
@@ -284,6 +276,7 @@
             document.getElementById('stepDateDisplay').innerText = formattaData(date);
             document.getElementById('stepDesc').innerText = "È un tuo giorno di riposo?";
             document.getElementById('btnConfirmDate').style.display = "block";
+            document.getElementById('btnBackStep').style.display = "none"; // MODIFICA: Scompare in fase di conferma
             document.getElementById('btnCloseStep').style.display = "block";
             document.getElementById('btnCloseStep').innerText = "Chiudi";
             document.getElementById('stepModal').style.display = 'block';
@@ -293,23 +286,21 @@
             let turniCalc = calcolaTurni();
             let turnoCorrenteObj = turniCalc.find(e => e.start === date);
             let nomeTurno = turnoCorrenteObj ? turnoCorrenteObj.title : "Nessun turno";
-            
             let htmlInfo = `<strong>Turno attuale:</strong> ${nomeTurno} ${state.variazioni[date] ? '(Modificato)' : ''}`;
             const dettagli = turniDatabase[nomeTurno.toUpperCase()];
             if (dettagli) {
                 htmlInfo += `<hr style="margin:10px 0; border:0; border-top:1px solid #eee;">`;
-                htmlInfo += ` <b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
-                htmlInfo += ` <b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
+                htmlInfo += `<b>Inizio:</b> ${dettagli.inizio} (${dettagli.luogoInizio})<br>`;
+                htmlInfo += `<b>Fine:</b> ${dettagli.fine} (${dettagli.luogoFine})`;
             }
-            infoArea.innerHTML = htmlInfo;
-            infoArea.style.display = "block";
-            popolaCambio();
+            infoArea.innerHTML = htmlInfo; infoArea.style.display = "block"; popolaCambio();
             document.getElementById('editModal').style.display = 'block';
         }
     }
 
     function procediConfigurazione() {
         state.riposoStart = selectedDate;
+        document.getElementById('btnBackStep').style.display = "none";
         if (state.depositoAttivo.startsWith('disp_')) {
             state.setupStep = 3; salvaLocal(); location.reload();
         } else {
@@ -343,11 +334,8 @@
 
     function isGiornoRiposo(dStr) {
         if (state.variazioni[dStr] === "RIPOSO") return true;
-        
-        // Determina dinamicamente se la data appartiene allo storico o al presente
         let cfg = (state.history && stringToNum(dStr) < stringToNum(DATA_INIZIO_NUOVI_TURNI)) ? state.history : state;
         if (!cfg.riposoStart) return false;
-
         let ref = stringToNum(cfg.riposoStart), curr = stringToNum(dStr);
         if (cfg.depositoAttivo === 'disp_det') {
             return (((curr - ref) % 6 + 6) % 6 === 0);
@@ -376,33 +364,46 @@
     function calcolaTurni() {
         if (!state.riposoStart) return [];
         let evs = [];
-        let todayNum = stringToNum(new Date().toISOString().split('T')[0]);
+        let today = new Date();
+        let firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        // MODIFICA: Calcolo esteso a 365 giorni dal riferimento della rotazione
+        let limit = 365;
+        if (state.rotazioneStart) {
+            let distDaOggi = Math.abs(stringToNum(today.toISOString().split('T')[0]) - stringToNum(state.rotazioneStart));
+            limit = distDaOggi + 365; 
+        }
 
-        for (let i = -60; i < 300; i++) {
-            let curr = todayNum + i, dObj = new Date(curr * 86400000), dStr = dObj.toISOString().split('T')[0];
-            
-            // Priorità ai cambi manuali
+        for (let i = -31; i < limit; i++) {
+            let dObj = new Date(today); dObj.setDate(today.getDate() + i);
+            let dStr = dObj.toISOString().split('T')[0];
+            let curr = stringToNum(dStr);
             if (state.variazioni[dStr]) {
                 let v = state.variazioni[dStr];
                 evs.push({ title: v, start: dStr, className: v==='RIPOSO'?'bg-riposo':'bg-modificato', allDay: true });
                 continue;
             }
-
-            // Selezione dinamica della configurazione basata sulla costante DATA_INIZIO_NUOVI_TURNI
-            let isPast = (state.history && curr < stringToNum(DATA_INIZIO_NUOVI_TURNI));
-            let cfg = isPast ? state.history : state;
-
+            let isPastUpdate = (state.history && curr < stringToNum(DATA_INIZIO_NUOVI_TURNI));
+            let cfg = isPastUpdate ? state.history : state;
             if (isGiornoRiposo(dStr)) {
                 evs.push({ title: 'RIPOSO', start: dStr, className: 'bg-riposo', allDay: true });
             } else {
                 let t = "";
-                if (cfg.depositoAttivo.startsWith('disp_')) { t = "DISP"; }
-                else if (cfg.rotazioneStart && curr >= stringToNum(cfg.rotazioneStart)) {
-                    let w = 0, rot = stringToNum(cfg.rotazioneStart);
-                    for (let j = rot; j < curr; j++) { if (!isGiornoRiposo(new Date(j * 86400000).toISOString().split('T')[0])) w++; }
-                    let startPos = ((stringToNum(cfg.rotazioneStart) - stringToNum(cfg.riposoStart) + 6) % 15 + 15) % 15;
+                if (cfg.depositoAttivo.startsWith('disp_')) { t = "DISP"; } 
+                else if (cfg.rotazioneStart) {
+                    let refRot = stringToNum(cfg.rotazioneStart), refRip = stringToNum(cfg.riposoStart);
+                    let w = 0;
+                    if (curr >= refRot) {
+                        for (let j = refRot; j < curr; j++) { if (!isGiornoRiposo(new Date(j * 86400000).toISOString().split('T')[0])) w++; }
+                    } else {
+                        for (let j = refRot; j > curr; j--) { if (!isGiornoRiposo(new Date(j * 86400000).toISOString().split('T')[0])) w--; }
+                    }
+                    let startPos = ((refRot - refRip + 6) % 15 + 15) % 15;
                     let offset = [1, 3, 5, 8, 10, 12].includes(startPos) ? 1 : 0;
-                    t = depositi[cfg.depositoAttivo][(cfg.turnoIndex + Math.floor((w + offset)/2)) % depositi[cfg.depositoAttivo].length].toUpperCase();
+                    let len = depositi[cfg.depositoAttivo].length;
+                    let idx = (cfg.turnoIndex + Math.floor((w + offset)/2)) % len;
+                    if (idx < 0) idx += len;
+                    t = depositi[cfg.depositoAttivo][idx].toUpperCase();
                     if (ECCEZIONE_DOMENICA_6P && dObj.getDay() === 0 && t.startsWith("6P")) t = "DISP";
                 }
                 if (t !== "") evs.push({ title: t, start: dStr, className: (t==='DISP'?'bg-disp':'bg-turno'), allDay: true });
@@ -440,20 +441,14 @@
     function confermaReset() { localStorage.removeItem('myTurniApp'); location.reload(); }
     function apriBackup() { document.getElementById('backupModal').style.display = 'block'; }
     function chiudiBackup() { document.getElementById('backupModal').style.display = 'none'; }
-    
     function esportaDatiSuFile() {
-        const data = localStorage.getItem('myTurniApp');
-        if(!data) return;
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `backup_turni_${new Date().toISOString().split('T')[0]}.json`;
+        const data = localStorage.getItem('myTurniApp'); if(!data) return;
+        const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `backup_turni_${new Date().toISOString().split('T')[0]}.json`;
         a.click(); URL.revokeObjectURL(url);
     }
-    
     function importaDatiDaFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+        const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
             try { localStorage.setItem('myTurniApp', e.target.result); alert("Backup ripristinato!"); location.reload(); }
@@ -461,7 +456,6 @@
         };
         reader.readAsText(file);
     }
-
     function popolaCambio() {
         const s = document.getElementById('singleTurnoSelect');
         s.innerHTML = '<option value="" disabled selected>Cambia...</option><option value="RIPOSO">RIPOSO</option><option value="DISP">DISP</option>';
@@ -473,7 +467,6 @@
         document.getElementById('btnSalvaCambio').disabled = true;
         s.onchange = () => { document.getElementById('btnSalvaCambio').disabled = false; };
     }
-
     function inizializzaCalendario() {
         calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth', locale: 'it', firstDay: 1, height: 'auto',
@@ -487,7 +480,5 @@
 </script>
 </body>
 </html>
-
-
 
 
