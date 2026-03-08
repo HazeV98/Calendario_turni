@@ -188,7 +188,7 @@
     </div>
 </div>
 
-<div id="editModal">
+<div id="editModal" onclick="chiudiEditSeSfondo(event)">
     <div class="modal-content">
         <h3 id="modalDate" style="margin-top:0;">Data</h3>
         <div id="infoTurniArea" style="font-size:0.9em; margin-bottom:15px; padding:10px; background:#f8f9fa; border-radius:10px; text-align:left; color:#525f7f; display:none;"></div>
@@ -237,7 +237,7 @@
 <div id="calendar"></div>
 
 <div class="disclaimer-banner">
-    ⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
+    ⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi. All'uscita delle Bibbie ufficiali verificare sempre la corrispondenza dei turni. 
 </div>
 
 <script>
@@ -509,6 +509,13 @@
         }
     }
 
+    // NUOVA FUNZIONE per chiudere la modale della data se si clicca lo sfondo
+    function chiudiEditSeSfondo(event) {
+        if (event.target.id === 'editModal') {
+            chiudiEdit();
+        }
+    }
+
     function erroreImmagine() {
         document.getElementById('turnoImage').onerror = null; 
         alert("L'immagine del turno non è stata trovata nel database.");
@@ -587,7 +594,6 @@
         document.getElementById('stepModal').style.display = 'block';
     }
 
-    // MODIFICA: Funzione matematica pura per contare i giorni lavorativi senza convertire date
     function isGiornoRiposoBase(curr, cfg) {
         if (!cfg.riposoStart) return false;
         let ref = stringToNum(cfg.riposoStart);
@@ -700,7 +706,6 @@
                     
                     let refRot = stringToNum(activeCfg.start), w = 0;
                     
-                    // MODIFICA: Calcolo ultra veloce tramite matematica senza creazione di date e ignora le variazioni manuali (bugfix!)
                     if (curr >= refRot) { 
                         for (let j = refRot; j < curr; j++) { if (!isGiornoRiposoBase(j, cfgBase)) w++; } 
                     } else { 
