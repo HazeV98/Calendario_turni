@@ -391,17 +391,33 @@
                 }
             }
 
-            // Gestione Doppio Tap (Mobile) e Doppio Clic (PC)
+            // Gestione Doppio Tap (Mobile) e Doppio Clic (PC) migliorata per non interferire con il pinch
             let lastTap = 0;
+            let isPinching = false;
+
+            imgElem.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    isPinching = true;
+                }
+            });
+
             imgElem.addEventListener('touchend', function(e) {
+                if (isPinching) {
+                    if (e.touches.length === 0) {
+                        setTimeout(() => isPinching = false, 300);
+                    }
+                    return;
+                }
+
                 let currentTime = new Date().getTime();
                 let tapLength = currentTime - lastTap;
                 if (tapLength < 300 && tapLength > 0) {
                     eseguiZoomToggle(e);
-                    e.preventDefault();
+                    if (e.cancelable) e.preventDefault();
                 }
                 lastTap = currentTime;
             });
+
             imgElem.addEventListener('dblclick', function(e) {
                 eseguiZoomToggle(e);
             });
