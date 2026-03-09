@@ -14,6 +14,7 @@
     <title>Calendario Turni</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
     
     <style>
         :root { 
@@ -222,22 +223,23 @@
     </div>
 </div>
 
-<div id="imageModal" style="z-index: 10000;" onclick="chiudiSeSfondo(event)">
-    <div style="position: absolute; top: calc(20px + env(safe-area-inset-top)); right: 20px; font-size: 35px; color: white; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5);" onclick="chiudiImageModal()">&times;</div>
-    <div id="imageFlexContainer" style="display:flex; flex-direction: column; justify-content:center; align-items:center; height:100%; padding:20px; padding-bottom: 80px;">
+<div id="imageModal" style="z-index: 10000; overflow: hidden;" onclick="chiudiSeSfondo(event)">
+    <div style="position: absolute; top: calc(20px + env(safe-area-inset-top)); right: 20px; font-size: 35px; color: white; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10001;" onclick="chiudiImageModal()">&times;</div>
+    <div id="imageFlexContainer" style="display:flex; flex-direction: column; justify-content:center; align-items:center; height:100%; padding:20px; padding-bottom: 80px; position: relative;">
+        
         <img id="turnoImage" src="" style="max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;">
         
-        <div id="imageBanner" style="margin-top: 15px; background: rgba(0,0,0,0.7); color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; text-align: center; max-width: 90%; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+        <div id="imageBanner" style="position: relative; z-index: 10001; margin-top: 15px; background: rgba(0,0,0,0.7); color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; text-align: center; max-width: 90%; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
             ⚠️ Controllare sempre i turni ufficiali e la presenza di eventuali varianti ai turni.
         </div>
     </div>
-    <button onclick="scaricaImmagineTurno()" style="position: absolute; bottom: calc(30px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); background: #11cdef; color: white; border: none; padding: 12px 24px; border-radius: 20px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer;">📥 Scarica</button>
+    <button onclick="scaricaImmagineTurno()" style="position: absolute; bottom: calc(30px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); background: #11cdef; color: white; border: none; padding: 12px 24px; border-radius: 20px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; z-index: 10001;">📥 Scarica</button>
 </div>
 
 <div id="calendar"></div>
 
 <div class="disclaimer-banner">
-    ⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi. All'uscita delle Bibbie ufficiali verificare sempre la corrispondenza dei turni. 
+    ⚠️ Questo è uno strumento non ufficiale che può presentare errori. L'ordine dei turni cambia periodicamente, I turni a lungo termine vanno quindi considerati indicativi.
 </div>
 
 <script>
@@ -247,7 +249,6 @@
 
     const LISTA_FILE_INFO = ["info_turni_dal_2026-03-02.json", "info_turni_2026-02-06.json"];
     
-    // Elenco delle cartelle immagini su GitHub da aggiornare insieme ai file info
     const LISTA_CARTELLE_IMMAGINI = ["turni_2026-03-02", "turni_2026-02-06"];
 
     const LISTA_FILE_ROTAZIONI = [
@@ -256,18 +257,9 @@
     ];
     
     const RESET_DOPO_AGGIORNAMENTO = {
-        rot_fnove: true, 
-        spez_fnove: true, 
-        rot_proma: true, 
-        spez_proma: true,
-        rot_szaccaria: true, 
-        spez_szaccaria: true, 
-        rot_lido: true, 
-        spez_lido: true,
-        rot_linea14: true,
-        rot_17sn: true,
-        rot_17tr: true,
-        rot_linea12: true
+        rot_fnove: true, spez_fnove: true, rot_proma: true, spez_proma: true,
+        rot_szaccaria: true, spez_szaccaria: true, rot_lido: true, spez_lido: true,
+        rot_linea14: true, rot_17sn: true, rot_17tr: true, rot_linea12: true
     };
 
     let state = JSON.parse(localStorage.getItem('myTurniApp')) || { version: "0", variazioni: {}, colori: {}, setupStep: 0, dbCache: {}, rotCache: {} };
@@ -276,6 +268,7 @@
     let selectedDate, tempRotDate, calendar;
     let deferredPrompt; 
     let currentImagePath = "";
+    let pzInstance = null; // Variabile per la gestione dello zoom
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -376,6 +369,44 @@
 
     document.addEventListener('DOMContentLoaded', async function() {
         await caricaDatiEsterni();
+        
+        // Inizializzazione della libreria Zoom se presente
+        const imgElem = document.getElementById('turnoImage');
+        if (typeof Panzoom !== 'undefined') {
+            pzInstance = Panzoom(imgElem, {
+                maxScale: 5,
+                minScale: 1
+            });
+            // Supporto zoom rotellina del mouse (per i pc)
+            document.getElementById('imageFlexContainer').addEventListener('wheel', pzInstance.zoomWithWheel);
+            
+            // Funzione per gestire il toggle dello zoom
+            function eseguiZoomToggle(e) {
+                if (!pzInstance) return;
+                let currentScale = pzInstance.getScale();
+                if (currentScale < 1.1) {
+                    pzInstance.zoom(1.75, { animate: true });
+                } else {
+                    pzInstance.reset({ animate: true });
+                }
+            }
+
+            // Gestione Doppio Tap (Mobile) e Doppio Clic (PC)
+            let lastTap = 0;
+            imgElem.addEventListener('touchend', function(e) {
+                let currentTime = new Date().getTime();
+                let tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    eseguiZoomToggle(e);
+                    e.preventDefault();
+                }
+                lastTap = currentTime;
+            });
+            imgElem.addEventListener('dblclick', function(e) {
+                eseguiZoomToggle(e);
+            });
+        }
+
         if (!state.depositoAttivo) {
             document.getElementById('welcomeModal').style.display = 'block';
         } else if (state.version !== VERSIONE_TURNI) {
@@ -495,12 +526,15 @@
         imgElement.onerror = erroreImmagine; 
         imgElement.src = currentImagePath;
         
+        if (pzInstance) { pzInstance.reset(); }
+        
         document.getElementById('imageModal').style.display = 'block';
     }
 
     function chiudiImageModal() {
         document.getElementById('imageModal').style.display = 'none';
         document.getElementById('turnoImage').removeAttribute('src');
+        if (pzInstance) { pzInstance.reset(); }
     }
 
     function chiudiSeSfondo(event) {
@@ -509,7 +543,6 @@
         }
     }
 
-    // NUOVA FUNZIONE per chiudere la modale della data se si clicca lo sfondo
     function chiudiEditSeSfondo(event) {
         if (event.target.id === 'editModal') {
             chiudiEdit();
