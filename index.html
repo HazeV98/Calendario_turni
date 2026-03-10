@@ -64,10 +64,10 @@
             font-size: 13px; text-align: center; line-height: 1.4;
         }
 
-        #welcomeModal, #stepModal, #editModal, #resetModal, #backupModal, #colorModal, #imageModal, #jumpModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        #welcomeModal, #stepModal, #editModal, #resetModal, #backupModal, #colorModal, #imageModal, #jumpModal, #icsModal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         .modal-content { background: white; margin: 15% auto; padding: 25px; width: 85%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
 
-        select, input[type="text"] { width: 100%; box-sizing: border-box; margin: 15px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: white; -webkit-appearance: none; }
+        select, input[type="text"], input[type="date"] { width: 100%; box-sizing: border-box; margin: 15px 0; padding: 15px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; background: white; -webkit-appearance: none; }
         .btn { padding: 16px; border: none; border-radius: 14px; color: white; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 15px; }
         .btn-reset { background: #f5365c; padding: 8px 15px; width: auto; font-size: 12px; }
         .instruction-text { font-size: 15px; line-height: 1.6; color: #525f7f; margin-bottom: 10px; }
@@ -95,11 +95,14 @@
         <h2 style="margin:0; font-size: 18px;">Gestione Turni</h2>
         <span id="activeDepotLabel" class="deposito-tag">In attesa...</span>
     </div>
-    <div>
-        <button id="btnInstall" class="btn btn-reset" style="background: #2dce89; margin-right: 5px; display: none;" onclick="installaApp()">INSTALLA</button>
-        <button class="btn btn-reset" style="background: #5e72e4; margin-right: 5px;" onclick="scaricaPDF()">PDF</button>
-        <button class="btn btn-reset" style="background: #adb5bd; margin-right: 5px;" onclick="apriBackup()">BACKUP</button>
-        <button class="btn btn-reset" onclick="apriReset()">RESET</button>
+    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+        <div style="display: flex;">
+            <button id="btnInstall" class="btn btn-reset" style="background: #2dce89; margin-right: 5px; display: none;" onclick="installaApp()">INSTALLA</button>
+            <button class="btn btn-reset" style="background: #5e72e4; margin-right: 5px;" onclick="scaricaPDF()">PDF</button>
+            <button class="btn btn-reset" style="background: #adb5bd; margin-right: 5px;" onclick="apriBackup()">BACKUP</button>
+            <button class="btn btn-reset" onclick="apriReset()">RESET</button>
+        </div>
+        <button class="btn btn-reset" style="background: #5e72e4; margin-top: 8px; width: 100%; box-sizing: border-box;" onclick="apriIcsModal()">ESPORTA CALENDARIO ICS</button>
     </div>
 </div>
 
@@ -120,6 +123,19 @@
         <button class="btn" style="background: var(--turno);" onclick="esportaDatiSuFile()">Scarica Backup (Esporta)</button>
         <button class="btn" style="background: var(--riposo);" onclick="document.getElementById('fileInput').click()">Carica Backup (Importa)</button>
         <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiBackup()">Chiudi</button>
+    </div>
+</div>
+
+<div id="icsModal">
+    <div class="modal-content">
+        <h3 style="color: #5e72e4; margin-top: 0;">Esporta in ICS</h3>
+        <p class="instruction-text" style="font-size: 14px;">Seleziona il periodo da esportare.</p>
+        <label style="font-size: 14px; color: #525f7f; text-align: left; display: block; margin-top: 10px;">Da:</label>
+        <input type="date" id="icsStartDate">
+        <label style="font-size: 14px; color: #525f7f; text-align: left; display: block; margin-top: 10px;">A:</label>
+        <input type="date" id="icsEndDate">
+        <button class="btn" style="background: #5e72e4;" onclick="esportaICS()">Scarica .ics</button>
+        <button class="btn" style="background: #f8f9fa; color: #525f7f; margin-top: 15px;" onclick="chiudiIcsModal()">Chiudi</button>
     </div>
 </div>
 
@@ -856,6 +872,89 @@
         const input = document.getElementById('singleTurnoSelect');
         input.value = '';
         document.getElementById('btnSalvaCambio').disabled = true;
+    }
+
+    function apriIcsModal() { document.getElementById('icsModal').style.display = 'block'; }
+    function chiudiIcsModal() { document.getElementById('icsModal').style.display = 'none'; }
+    
+    function esportaICS() {
+        const startDate = document.getElementById('icsStartDate').value;
+        const endDate = document.getElementById('icsEndDate').value;
+        if (!startDate || !endDate) { alert("Seleziona entrambe le date."); return; }
+        if (startDate > endDate) { alert("La data di inizio deve essere precedente alla data di fine."); return; }
+        
+        const turni = calcolaTurni();
+        const turniFiltrati = turni.filter(t => t.start >= startDate && t.start <= endDate);
+        
+        if (turniFiltrati.length === 0) { alert("Nessun turno nel periodo selezionato."); return; }
+        
+        let ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//MyTurniApp//IT\r\nCALSCALE:GREGORIAN\r\n";
+        const dateChiavi = Object.keys(state.dbCache || {}).sort();
+        
+        turniFiltrati.forEach(t => {
+            const dateParts = t.start.split('-');
+            const icsDate = dateParts[0] + dateParts[1] + dateParts[2];
+            
+            let d = new Date(t.start);
+            d.setDate(d.getDate() + 1);
+            const nextDateStr = d.toISOString().split('T')[0];
+            const nextParts = nextDateStr.split('-');
+            const icsNextDate = nextParts[0] + nextParts[1] + nextParts[2];
+            
+            const uid = t.start + "-" + t.title.replace(/\s+/g, '') + "@myturniapp";
+            const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + "Z";
+            
+            // --- INIZIO RECUPERO DETTAGLI ---
+            let dbCorrente = {};
+            const dSelezionata = stringToNum(t.start);
+            for (let i = dateChiavi.length - 1; i >= 0; i--) { 
+                if (dSelezionata >= stringToNum(dateChiavi[i])) { 
+                    dbCorrente = state.dbCache[dateChiavi[i]]; 
+                    break; 
+                } 
+            }
+            const giorniSuffix = ["_DOM", "_LUN", "_MAR", "_MER", "_GIO", "_VEN", "_SAB"];
+            let giornoIdx = new Date(t.start).getDay();
+            let suffissoGiorno = giorniSuffix[giornoIdx];
+            
+            let codiceBase = t.title.toUpperCase();
+            let dettagli = dbCorrente[codiceBase + suffissoGiorno] || dbCorrente[codiceBase];
+
+            let orariTitolo = "";
+            let descrizione = "";
+            let location = "";
+
+            if (dettagli && dettagli.inizio && dettagli.fine) {
+                orariTitolo = ` (${dettagli.inizio} - ${dettagli.fine})`;
+                descrizione = `Inizio: ${dettagli.inizio} (${dettagli.luogoInizio})\\nFine: ${dettagli.fine} (${dettagli.luogoFine})`;
+                location = dettagli.luogoInizio;
+            }
+            // --- FINE RECUPERO DETTAGLI ---
+
+            ics += "BEGIN:VEVENT\r\n";
+            ics += "UID:" + uid + "\r\n";
+            ics += "DTSTAMP:" + now + "\r\n";
+            ics += "DTSTART;VALUE=DATE:" + icsDate + "\r\n";
+            ics += "DTEND;VALUE=DATE:" + icsNextDate + "\r\n";
+            ics += "SUMMARY:" + t.title + orariTitolo + "\r\n";
+            if (descrizione) ics += "DESCRIPTION:" + descrizione + "\r\n";
+            if (location) ics += "LOCATION:" + location + "\r\n";
+            ics += "END:VEVENT\r\n";
+        });
+        
+        ics += "END:VCALENDAR";
+        
+        const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `turni_${startDate}_al_${endDate}.ics`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        chiudiIcsModal();
     }
 
     function inizializzaCalendario() {
